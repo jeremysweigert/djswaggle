@@ -480,10 +480,12 @@
             <li><b>--listen</b> binds ComfyUI to your tailnet (not just localhost).</li>
             <li><b>--enable-cors-header</b> lets this app talk to it.</li>
           </ul>
-          <p>Open this page <b>over http or as a local file</b> (not https) on a device on the same Tailscale network. The address above is your Tailscale IP and port, e.g. <code>http://100.116.157.100:8188</code>.</p>
-          <p>If a local file won’t connect on your phone, serve it from the host:</p>
+          <p style="color:var(--warn);"><b>Don’t open this from an email or Files attachment.</b> Android runs it sandboxed (the address bar shows <code>content://…</code> or <code>file://…</code>) and blocks it from reaching your server.</p>
+          <p><b>Best way on a phone — serve it from the ComfyUI host.</b> Put <code>studio.html</code> in a folder on that machine and run:</p>
           <span class="cmd">python -m http.server 8189</span>
-          <p>…then open <code>http://100.116.157.100:8189/studio.html</code>.</p>
+          <p>Then open <code>http://100.116.157.100:8189/studio.html</code> in Chrome. The page now lives on your tailnet, so if it loads it can reach the API.</p>
+          <p>Either way, ComfyUI must be started with both flags, and your phone must be on the same Tailscale network. The address above is your Tailscale IP and port, e.g. <code>http://100.116.157.100:8188</code>.</p>
+          <p style="color:var(--muted-2);">Stuck? Open <code>http://100.116.157.100:8188</code> in a plain browser tab. If that won’t load, it’s Tailscale or the server — not this app.</p>
           <p style="margin-top:12px;"><b>Add to your Home Screen:</b> iPhone → Share → <i>Add to Home Screen</i>. Android Chrome → ⋮ → <i>Add to Home screen</i>. It then opens full-screen like an app.</p>
           <p style="margin-top:10px; color:var(--muted-2);">Z-Image runs out of the box. The other workflows run after you import their API JSON once (the button on each tab).</p>
         </div>
@@ -1166,8 +1168,23 @@
   });
   $("btnTest").onclick=async function(){
     saveSettingsForm(); var line=$("testLine"); line.className="testline warn"; line.textContent="Testing…";
-    try{ var s=await api("/system_stats"); var name="ComfyUI"; try{ if(s&&s.devices&&s.devices[0]) name=s.devices[0].name; }catch(e){} line.className="testline ok"; line.textContent="Connected ✓  "+name; wsRetry=0; connectWs(); refreshVram(); }
-    catch(e){ line.className="testline err"; line.textContent="No response. Check address + --listen --enable-cors-header."; }
+    try{
+      var s=await api("/system_stats"); var name="ComfyUI"; try{ if(s&&s.devices&&s.devices[0]) name=s.devices[0].name; }catch(e){}
+      line.className="testline ok"; line.textContent="Connected ✓  "+name; wsRetry=0; connectWs(); refreshVram(); return;
+    }catch(e){}
+    // probe reachability without CORS to tell failure modes apart
+    var reachable=false;
+    try{ await fetch(baseUrl()+"/system_stats",{ mode:"no-cors", cache:"no-store" }); reachable=true; }catch(e2){ reachable=false; }
+    var proto=location.protocol;
+    line.className="testline err";
+    if(proto==="content:" || proto==="file:"){
+      var where = proto==="content:" ? "an email/Files attachment" : "a local file";
+      line.textContent = "This page is running from "+where+", which blocks the connection"+(reachable?" (your server is actually reachable). ":". ")+"Serve it from your ComfyUI host and open the http:// link — see Setup below.";
+    } else if(reachable){
+      line.textContent="Server is reachable but blocked the request — restart ComfyUI with --enable-cors-header, then reload this page.";
+    } else {
+      line.textContent="No response. Check Tailscale is on, the PC is awake, and the address is exactly right (try opening it in a browser tab).";
+    }
   };
   $("btnReset").onclick=function(){ Object.assign(settings,DEFAULTS); persistSettings(); loadSettingsForm(); wsRetry=0; connectWs(); toast("Settings reset"); };
   $("btnClearGallery").onclick=function(){ gallery=[]; LS.set("cs_gallery",gallery); WORKFLOWS.forEach(function(w){ wfStates[w.id].lastResult=null; }); persist(); renderStrip(); clearStage(); refreshComposerForWf(); toast("Results cleared"); };
@@ -1180,6 +1197,9 @@
   renderTabs();
   refreshComposerForWf();
   connectWs();
+  if(location.protocol==="content:" || location.protocol==="file:"){
+    setTimeout(function(){ toast("Heads up: serve this from your ComfyUI host and open the http:// link — attachment/file mode usually blocks the connection.", true); }, 1400);
+  }
 })();
 </script>
 </body>
