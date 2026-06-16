@@ -1,0 +1,1186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0B0D12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Studio">
+<title>ComfyUI Studio</title>
+<style>
+  :root{
+    --ink:#0B0D12; --ink-2:#0E1117;
+    --surface:#151A24; --surface-2:#1B2230; --surface-3:#232C3D;
+    --line:#2A3343; --line-soft:#1F2735;
+    --text:#EAEDF3; --muted:#8B94A8; --muted-2:#5C6578;
+    --emit-a:#FF6A3D; --emit-b:#B14BFF;
+    --accent:#9A6BFF; --accent-ink:#0B0D12;
+    --accent-soft:rgba(154,107,255,.16);
+    --ok:#39D98A; --warn:#FFB23D; --err:#FF5C72;
+    --grad:linear-gradient(105deg,var(--emit-a),var(--emit-b));
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono","Cascadia Code",Menlo,Consolas,monospace;
+    --r-card:18px; --r-input:13px; --r-pill:999px;
+    --shadow:0 10px 30px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--ink); color:var(--text);
+    font-family:var(--sans); font-size:16px; line-height:1.45;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    display:flex; flex-direction:column; height:100dvh; overflow:hidden;
+    overscroll-behavior:none;
+  }
+  button{font-family:inherit; color:inherit; cursor:pointer; border:none; background:none;}
+  input,textarea,select{font-family:inherit; color:inherit;}
+  .mono{font-family:var(--mono);}
+  .eyebrow{font-family:var(--mono); font-size:10.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted-2);}
+
+  /* ---------- top bar ---------- */
+  header{
+    flex:0 0 auto; padding:env(safe-area-inset-top) 16px 0;
+    border-bottom:1px solid var(--line-soft); background:rgba(11,13,18,.85);
+    backdrop-filter:saturate(140%) blur(10px);
+  }
+  .bar{height:52px; display:flex; align-items:center; gap:12px; max-width:760px; margin:0 auto;}
+  .wordmark{display:flex; align-items:center; gap:9px; font-weight:800; letter-spacing:-.02em; font-size:17px;}
+  .wordmark .gmark{width:22px;height:22px;border-radius:7px;background:var(--grad);box-shadow:0 0 0 1px rgba(0,0,0,.3),0 4px 12px rgba(177,75,255,.3);flex:0 0 auto;transition:background .3s;}
+  .wordmark .sub{font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted);}
+  .spacer{flex:1;}
+  .status{display:flex; align-items:center; gap:7px; font-family:var(--mono); font-size:11px; letter-spacing:.04em;
+    color:var(--muted); padding:6px 11px; border:1px solid var(--line); border-radius:var(--r-pill); background:var(--surface);}
+  .dot{width:7px; height:7px; border-radius:50%; background:var(--muted-2); box-shadow:0 0 0 0 transparent; transition:.3s;}
+  .status[data-state="online"] .dot{background:var(--ok); box-shadow:0 0 10px color-mix(in srgb,var(--ok) 80%,transparent);}
+  .status[data-state="connecting"] .dot{background:var(--warn); animation:pulse 1.1s infinite;}
+  .status[data-state="offline"] .dot{background:var(--err);}
+  @keyframes pulse{0%,100%{opacity:1} 50%{opacity:.25}}
+  .icon-btn{width:40px; height:40px; border-radius:12px; display:grid; place-items:center; color:var(--muted);
+    border:1px solid var(--line); background:var(--surface); transition:.18s;}
+  .icon-btn:hover{color:var(--text); border-color:var(--accent);}
+  .icon-btn:active{transform:scale(.94);}
+
+  /* ---------- workflow tabs ---------- */
+  .tabsbar{flex:0 0 auto; background:rgba(11,13,18,.92); border-bottom:1px solid var(--line-soft);}
+  .tabs{display:flex; gap:8px; padding:9px 16px; overflow-x:auto; max-width:760px; margin:0 auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;}
+  .tabs::-webkit-scrollbar{height:0;}
+  .tab{flex:0 0 auto; display:flex; align-items:center; gap:9px; padding:8px 13px 8px 11px; border-radius:14px;
+    border:1px solid var(--line); background:var(--surface-2); transition:.16s; position:relative;}
+  .tab:active{transform:scale(.97);}
+  .tab .tg{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex:0 0 auto;color:#fff;}
+  .tab .tt{display:flex;flex-direction:column;align-items:flex-start;line-height:1.1;min-width:0;}
+  .tab .tn{font-size:13.5px;font-weight:650;letter-spacing:-.01em;color:var(--text);}
+  .tab .ts{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-2);margin-top:2px;}
+  .tab.active{border-color:transparent; box-shadow:0 0 0 1.5px var(--accent), 0 8px 20px rgba(0,0,0,.35); background:var(--surface-3);}
+  .tab .setup{position:absolute;top:-5px;right:-5px;width:15px;height:15px;border-radius:50%;background:var(--warn);
+    color:#1a1206;font-size:10px;font-weight:800;display:grid;place-items:center;border:2px solid var(--ink);}
+  .tab.ready .setup{display:none;}
+
+  /* ---------- main scroll ---------- */
+  main{flex:1 1 auto; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;}
+  .wrap{max-width:760px; margin:0 auto; padding:16px 16px 8px;}
+
+  /* ---------- render stage ---------- */
+  .stage{
+    position:relative; width:100%; aspect-ratio:1/1; border-radius:var(--r-card);
+    background:radial-gradient(120% 120% at 50% -10%, #161c28 0%, #0d1118 60%, #0a0d13 100%);
+    border:1px solid var(--line); overflow:hidden; isolation:isolate; transition:aspect-ratio .35s ease;
+  }
+  .stage::before{content:""; position:absolute; inset:0; opacity:.5; pointer-events:none;
+    background-image:radial-gradient(rgba(255,255,255,.045) 1px, transparent 1px); background-size:18px 18px;}
+  .tick{position:absolute; width:22px; height:22px; pointer-events:none; z-index:5; opacity:.55;}
+  .tick::before,.tick::after{content:""; position:absolute; background:var(--muted);}
+  .tick::before{width:100%; height:1.5px;} .tick::after{height:100%; width:1.5px;}
+  .tick.tl{top:12px; left:12px;} .tick.tr{top:12px; right:12px;} .tick.tr::after{right:0;} .tick.tr::before{right:0;}
+  .tick.bl{bottom:12px; left:12px;} .tick.bl::before{bottom:0;} .tick.br{bottom:12px; right:12px;} .tick.br::before{bottom:0; right:0;} .tick.br::after{right:0;}
+  body[data-busy="1"] .tick{opacity:1; color:var(--emit-b);}
+  body[data-busy="1"] .tick::before,body[data-busy="1"] .tick::after{background:var(--grad);}
+
+  .stage img.media,.stage video.media{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:3;}
+  #previewImg{z-index:2; filter:blur(1px) saturate(1.05); opacity:0; transition:opacity .25s;}
+  #resultImg,#resultVideo{opacity:0; transform:scale(.985); transition:opacity .45s ease, transform .6s cubic-bezier(.2,.8,.2,1); cursor:zoom-in;}
+  .stage.has-img #resultImg,.stage.has-vid #resultVideo{opacity:1; transform:none;}
+  .stage.has-img::before,.stage.has-vid::before{opacity:0;}
+  .stage:not(.has-vid) #resultVideo{display:none;}
+  .stage:not(.has-img) #resultImg{display:none;}
+
+  .empty{position:absolute; inset:0; z-index:4; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:24px; text-align:center;}
+  .empty .glyph{width:46px; height:46px; border-radius:13px; display:grid; place-items:center; color:var(--muted); border:1px solid var(--line); background:var(--surface-2);}
+  .empty h2{margin:0; font-size:16px; font-weight:650; letter-spacing:-.01em;}
+  .empty p{margin:0; color:var(--muted); font-size:13.5px; max-width:32ch; line-height:1.5;}
+  .empty .examples{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:4px;}
+  .ex{font-size:12.5px; color:var(--text); background:var(--surface-2); border:1px solid var(--line); padding:7px 12px; border-radius:var(--r-pill); transition:.16s;}
+  .ex:active{transform:scale(.96);}
+  .empty .setupbtn{margin-top:4px; padding:11px 18px; border-radius:12px; background:var(--accent-soft);
+    border:1px solid color-mix(in srgb,var(--accent) 55%,transparent); color:#fff; font-weight:650; font-size:14px;}
+  .empty .setupbtn:active{transform:scale(.97);}
+  body[data-busy="1"] .empty{display:none;}
+  .stage.has-img .empty,.stage.has-vid .empty{display:none;}
+
+  .gen{position:absolute; inset:0; z-index:6; display:none; flex-direction:column; justify-content:flex-end; pointer-events:none;}
+  body[data-busy="1"] .gen{display:flex;}
+  .genchip{position:absolute; top:14px; left:14px; display:flex; align-items:center; gap:9px; font-family:var(--mono); font-size:11px; letter-spacing:.05em; color:var(--text);
+    background:rgba(11,13,18,.72); border:1px solid var(--line); padding:7px 11px; border-radius:var(--r-pill); backdrop-filter:blur(6px);}
+  .genchip .spin{width:11px; height:11px; border-radius:50%; border:2px solid color-mix(in srgb,var(--emit-b) 30%,transparent); border-top-color:var(--emit-b); animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .pct{font-variant-numeric:tabular-nums;}
+  .pbar{height:3px; width:100%; background:rgba(255,255,255,.07); position:relative; overflow:hidden;}
+  .pfill{height:100%; width:0%; background:var(--grad); transition:width .3s ease; box-shadow:0 0 12px color-mix(in srgb,var(--emit-b) 60%,transparent);}
+  .pbar.indeterminate .pfill{width:38% !important; animation:slide 1.15s ease-in-out infinite;}
+  @keyframes slide{0%{transform:translateX(-110%)} 100%{transform:translateX(330%)}}
+
+  /* ---------- result meta + actions ---------- */
+  .meta{display:flex; align-items:center; gap:10px; margin-top:12px; flex-wrap:wrap;}
+  .meta .read{font-family:var(--mono); font-size:11.5px; color:var(--muted); display:inline-flex; align-items:center; gap:6px;}
+  .meta .read b{color:var(--text); font-weight:500;}
+  .meta .grow{flex:1;}
+  .act{display:inline-flex; align-items:center; gap:7px; font-size:13px; font-weight:600; padding:9px 14px; border-radius:11px; border:1px solid var(--line); background:var(--surface-2); transition:.16s;}
+  .act:active{transform:scale(.96);}
+  .act.primary{background:var(--accent-soft); border-color:color-mix(in srgb,var(--accent) 55%,transparent); color:#fff;}
+  .act svg{opacity:.9;}
+  .hidden{display:none !important;}
+
+  /* ---------- film strip ---------- */
+  .strip-head{display:flex; align-items:center; justify-content:space-between; margin:22px 0 10px;}
+  .strip{display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch;}
+  .strip::-webkit-scrollbar{height:0;}
+  .thumb{flex:0 0 auto; width:74px; height:74px; border-radius:12px; overflow:hidden; position:relative; border:1px solid var(--line); background:var(--surface-2); scroll-snap-align:start; transition:.16s;}
+  .thumb img,.thumb video{width:100%; height:100%; object-fit:cover; display:block;}
+  .thumb .vbadge{position:absolute; bottom:4px; right:4px; width:16px;height:16px;border-radius:5px;background:rgba(11,13,18,.8);display:grid;place-items:center;color:#fff;}
+  .thumb .vbadge svg{width:9px;height:9px;}
+  .thumb.active{border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft);}
+  .thumb:active{transform:scale(.95);}
+  .strip-empty{color:var(--muted-2); font-size:13px; font-family:var(--mono); padding:6px 2px;}
+
+  /* ---------- composer ---------- */
+  .composer{flex:0 0 auto; border-top:1px solid var(--line-soft); background:linear-gradient(180deg, rgba(14,17,23,.6), var(--ink-2)); backdrop-filter:blur(12px); padding:12px 16px calc(12px + env(safe-area-inset-bottom));}
+  .composer-inner{max-width:760px; margin:0 auto; display:flex; flex-direction:column; gap:10px;}
+  .opts{display:flex; flex-wrap:wrap; gap:8px; align-items:center;}
+  .chipbtn{display:inline-flex; align-items:center; gap:7px; font-size:13px; font-weight:550; padding:8px 12px; border-radius:var(--r-pill); border:1px solid var(--line); background:var(--surface-2); transition:.16s; min-height:38px;}
+  .chipbtn:active{transform:scale(.97);}
+  .chipbtn .v{font-family:var(--mono); font-size:12px; color:var(--text);}
+  .chipbtn .k{color:var(--muted); font-size:11px; font-family:var(--mono); letter-spacing:.04em;}
+  .chipbtn.on{background:var(--accent-soft); border-color:color-mix(in srgb,var(--accent) 55%,transparent); color:#fff;}
+  .chevron{color:var(--muted); display:inline-flex;}
+
+  .seg{display:inline-flex; padding:3px; gap:2px; border:1px solid var(--line); border-radius:var(--r-pill); background:var(--surface-2);}
+  .seg button{font-size:12.5px; font-weight:600; padding:6px 12px; border-radius:var(--r-pill); color:var(--muted); transition:.14s; line-height:1;}
+  .seg button.active{background:var(--accent-soft); color:#fff;}
+  .seg button:active{transform:scale(.96);}
+
+  .seedchip{display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:var(--r-pill); background:var(--surface-2); padding:4px 6px 4px 12px;}
+  .seedchip .k{font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:.04em;}
+  .seedchip input{width:13ch; max-width:34vw; background:transparent; border:none; outline:none; font-family:var(--mono); font-size:13px; color:var(--text); padding:0;}
+  .dice{width:30px; height:30px; border-radius:50%; display:grid; place-items:center; color:var(--muted); background:var(--surface-3); transition:.16s;}
+  .dice:active{transform:rotate(-18deg) scale(.92);}
+
+  .promptwrap{position:relative;}
+  #promptInput{width:100%; resize:none; min-height:52px; max-height:34vh; padding:14px 14px; border-radius:var(--r-input); background:var(--surface-2); border:1px solid var(--line); color:var(--text); font-size:16px; line-height:1.4; transition:border-color .16s, box-shadow .16s; outline:none;}
+  #promptInput::placeholder{color:var(--muted-2);}
+  #promptInput:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
+
+  .gobar{display:flex; gap:10px;}
+  .generate{flex:1; min-height:52px; border-radius:var(--r-input); background:var(--grad); color:#fff; font-size:16px; font-weight:750; letter-spacing:.01em; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 8px 24px rgba(177,75,255,.28); transition:transform .12s, filter .16s;}
+  .generate:active{transform:translateY(1px) scale(.995);}
+  .generate:disabled{opacity:.5; filter:grayscale(.3);}
+  .generate .glyph{font-size:15px;}
+  .cancel{min-height:52px; padding:0 20px; border-radius:var(--r-input); border:1px solid var(--err); color:var(--err); background:color-mix(in srgb,var(--err) 12%, transparent); font-weight:650; font-size:15px;}
+  .cancel:active{transform:scale(.97);}
+  body[data-busy="1"] #btnGenerate{display:none;}
+  body:not([data-busy="1"]) #btnCancel{display:none;}
+
+  /* ---------- sheets ---------- */
+  .scrim{position:fixed; inset:0; background:rgba(5,7,11,.6); backdrop-filter:blur(3px); z-index:40; opacity:0; pointer-events:none; transition:opacity .22s;}
+  .scrim.open{opacity:1; pointer-events:auto;}
+  .sheet{position:fixed; left:0; right:0; bottom:0; z-index:50; background:var(--ink-2); border-top:1px solid var(--line); border-radius:22px 22px 0 0; box-shadow:var(--shadow); transform:translateY(102%); transition:transform .3s cubic-bezier(.2,.8,.2,1); max-height:90dvh; display:flex; flex-direction:column;}
+  .sheet.open{transform:none;}
+  .sheet-head{display:flex; align-items:center; gap:12px; padding:16px 18px 10px;}
+  .grab{position:absolute; top:8px; left:50%; transform:translateX(-50%); width:38px; height:4px; border-radius:99px; background:var(--line);}
+  .sheet-head h3{margin:0; font-size:16px; font-weight:700;}
+  .sheet-body{overflow-y:auto; padding:6px 18px calc(24px + env(safe-area-inset-bottom)); max-width:760px; margin:0 auto; width:100%;}
+  .close-x{margin-left:auto;}
+
+  .field{margin:14px 0;}
+  .field>label{display:block; font-family:var(--mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:7px;}
+  .field .hint{font-size:11.5px; color:var(--muted-2); margin-top:6px; line-height:1.45;}
+  .input{width:100%; padding:12px 13px; border-radius:11px; background:var(--surface-2); border:1px solid var(--line); color:var(--text); font-size:16px; outline:none; transition:.16s;}
+  .input:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
+  textarea.input{resize:vertical;}
+  select.input{appearance:none; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238B94A8' stroke-width='2.4'><path d='M6 9l6 6 6-6'/></svg>"); background-repeat:no-repeat; background-position:right 12px center; padding-right:36px;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .row3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;}
+  .divider{display:flex; align-items:center; gap:10px; margin:22px 0 6px;}
+  .divider .eyebrow{white-space:nowrap;}
+  .divider .ln{flex:1; height:1px; background:var(--line-soft);}
+  .inline{display:flex; gap:10px; align-items:center;}
+  .btn{padding:11px 16px; border-radius:11px; border:1px solid var(--line); background:var(--surface-2); font-weight:600; font-size:14px; transition:.16s;}
+  .btn:active{transform:scale(.97);}
+  .btn.ghost{background:transparent;}
+  .btn.primary{background:var(--accent-soft); border-color:color-mix(in srgb,var(--accent) 55%,transparent); color:#fff;}
+  .btn.danger{border-color:color-mix(in srgb,var(--err) 50%,transparent); color:var(--err);}
+  .btn.full{width:100%;}
+  .testline{font-family:var(--mono); font-size:12px; margin-top:8px; min-height:16px;}
+  .testline.ok{color:var(--ok);} .testline.err{color:var(--err);} .testline.warn{color:var(--warn);}
+
+  .uploadrow{display:flex; gap:10px; align-items:stretch;}
+  .uploadrow .input{flex:1;}
+  .thumbmini{width:46px;height:46px;border-radius:10px;border:1px solid var(--line);background:var(--surface);object-fit:cover;flex:0 0 auto;}
+
+  .preset-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:4px;}
+  .preset{padding:14px 8px; border-radius:13px; border:1px solid var(--line); background:var(--surface-2); text-align:center; transition:.16s;}
+  .preset:active{transform:scale(.96);}
+  .preset.active{border-color:var(--accent); background:var(--accent-soft);}
+  .preset .ratio{margin:0 auto 9px; border:1.5px solid var(--muted); border-radius:3px;}
+  .preset.active .ratio{border-color:var(--accent);}
+  .preset .name{font-size:12.5px; font-weight:650;}
+  .preset .dim{font-family:var(--mono); font-size:10.5px; color:var(--muted); margin-top:2px;}
+
+  .steps{counter-reset:s; margin:10px 0 6px; padding:0; list-style:none;}
+  .steps li{position:relative; padding:4px 0 12px 34px; color:var(--muted); font-size:13.5px; line-height:1.5;}
+  .steps li::before{counter-increment:s; content:counter(s); position:absolute; left:0; top:2px; width:22px;height:22px;border-radius:50%; background:var(--surface-3); color:var(--text); font-weight:700; font-size:12px; display:grid; place-items:center;}
+  .steps b{color:var(--text);} .steps code{font-family:var(--mono); font-size:12px; color:#cfe7ff; background:#0a0d13; border:1px solid var(--line); border-radius:6px; padding:1px 6px;}
+  .mapline{font-family:var(--mono); font-size:11.5px; color:var(--muted); display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:6px;}
+  .mapline b{color:var(--ok); font-weight:600;} .mapline .miss{color:var(--warn);}
+
+  details.help{margin-top:18px; border:1px solid var(--line); border-radius:13px; background:var(--surface); overflow:hidden;}
+  details.help summary{padding:13px 15px; font-weight:650; font-size:14px; cursor:pointer; list-style:none; display:flex; align-items:center; gap:9px;}
+  details.help summary::-webkit-details-marker{display:none;}
+  details.help summary .chev{margin-left:auto; transition:.2s; color:var(--muted);}
+  details.help[open] summary .chev{transform:rotate(90deg);}
+  .help-body{padding:0 15px 16px; font-size:13.5px; color:var(--muted); line-height:1.6;}
+  .help-body code,.cmd{font-family:var(--mono); font-size:12.5px; color:var(--text);}
+  .cmd{display:block; background:#0a0d13; border:1px solid var(--line); border-radius:10px; padding:11px 12px; margin:10px 0; color:#cfe7ff; overflow-x:auto; white-space:pre;}
+  .help-body b{color:var(--text);}
+  .help-body ul{margin:8px 0; padding-left:18px;} .help-body li{margin:5px 0;}
+
+  /* ---------- fullscreen viewer ---------- */
+  .viewer{position:fixed; inset:0; z-index:60; background:rgba(6,8,12,.97); display:none; flex-direction:column;}
+  .viewer.open{display:flex;}
+  .viewer-top{display:flex; align-items:center; gap:10px; padding:calc(10px + env(safe-area-inset-top)) 16px 10px;}
+  .viewer-top .read{font-family:var(--mono); font-size:11.5px; color:var(--muted);}
+  .viewer-body{flex:1; display:grid; place-items:center; overflow:auto; padding:0 10px;}
+  .viewer-body img,.viewer-body video{max-width:100%; max-height:100%; object-fit:contain;}
+  .viewer-actions{display:flex; gap:10px; justify-content:center; padding:14px 16px calc(18px + env(safe-area-inset-bottom));}
+
+  /* ---------- toast ---------- */
+  .toast{position:fixed; left:50%; bottom:calc(96px + env(safe-area-inset-bottom)); translate:-50% 0; z-index:80; background:var(--surface-3); border:1px solid var(--line); color:var(--text); font-size:13.5px; font-weight:550; padding:11px 16px; border-radius:12px; box-shadow:var(--shadow); opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; max-width:88vw; text-align:center;}
+  .toast.show{opacity:1; transform:translateY(-6px);}
+  .toast.err{border-color:color-mix(in srgb,var(--err) 60%,transparent);}
+
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important; animation:none !important;} }
+  @media (min-width:760px){ .stage{max-height:60vh;} }
+</style>
+</head>
+<body data-busy="0">
+
+  <header>
+    <div class="bar">
+      <div class="wordmark"><span class="gmark"></span>studio</div>
+      <div class="spacer"></div>
+      <button class="status" id="status" data-state="connecting" title="Connection — tap for setup">
+        <span class="dot"></span><span id="statusText">connecting</span>
+      </button>
+      <button class="icon-btn" id="btnFree" aria-label="Free GPU memory" title="Free GPU memory — unload models">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/><path d="M12 9v3.5m0 0-1.4-1.4M12 12.5l1.4-1.4"/></svg>
+      </button>
+      <button class="icon-btn" id="openSettings" aria-label="Settings">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- workflow tabs -->
+  <div class="tabsbar"><div class="tabs" id="tabs"></div></div>
+
+  <main>
+    <div class="wrap">
+      <div class="stage" id="stage">
+        <span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+        <img id="previewImg" class="media" alt="">
+        <img id="resultImg" class="media" alt="generated image">
+        <video id="resultVideo" class="media" playsinline muted loop></video>
+        <div class="empty" id="empty">
+          <div class="glyph">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 15-4.5-4.5L9 18"/></svg>
+          </div>
+          <div>
+            <h2 id="emptyTitle">Make something</h2>
+            <p id="emptyText">Pick a workflow above, type a prompt, and tap Generate.</p>
+          </div>
+          <div class="examples" id="examples"></div>
+          <button class="setupbtn hidden" id="setupBtn">Set up this workflow</button>
+        </div>
+        <div class="gen" id="gen">
+          <div class="genchip"><span class="spin"></span><span id="genLabel">queued</span><span class="pct" id="genPct"></span></div>
+          <div class="pbar indeterminate" id="pbar"><div class="pfill" id="pfill"></div></div>
+        </div>
+      </div>
+
+      <div class="meta" id="meta">
+        <span class="read" id="readSeed"></span>
+        <span class="read" id="readDim"></span>
+        <span class="grow"></span>
+        <button class="act hidden" id="btnUsePrompt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16M4 6h16M4 18h10"/></svg>Use prompt</button>
+        <button class="act hidden" id="btnUseSeed"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor"/></svg>Use seed</button>
+        <button class="act hidden" id="btnExpand"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Expand</button>
+        <button class="act primary hidden" id="btnDownload"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>Save</button>
+      </div>
+
+      <div class="strip-head">
+        <span class="eyebrow" id="stripLabel">This session</span>
+        <button class="btn ghost" id="clearStrip" style="padding:5px 10px; font-size:12px;">Clear</button>
+      </div>
+      <div class="strip" id="strip"><span class="strip-empty">No results yet</span></div>
+    </div>
+  </main>
+
+  <!-- composer -->
+  <div class="composer">
+    <div class="composer-inner">
+      <div class="opts">
+        <button class="chipbtn" id="sizeBtn"><span class="k">size</span><span class="v" id="sizeVal">1024×1024</span><span class="chevron"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></span></button>
+        <button class="chipbtn hidden" id="inputsBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg> Inputs</button>
+        <div class="seg" id="seedSeg">
+          <button data-mode="random" class="active">Random</button>
+          <button data-mode="fixed">Fixed</button>
+          <button data-mode="increment">+1</button>
+        </div>
+        <div class="seedchip">
+          <span class="k">seed</span>
+          <input id="seedField" inputmode="numeric" autocomplete="off" spellcheck="false" value="0">
+          <button class="dice" id="btnDice" aria-label="Random seed"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="16" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="16" r="1.3" fill="currentColor"/><circle cx="16" cy="16" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg></button>
+        </div>
+        <button class="chipbtn hidden" id="qualityBtn" title="Append a photoreal quality boost"><span class="glyph">✦</span> Quality</button>
+      </div>
+
+      <div class="promptwrap">
+        <textarea id="promptInput" placeholder="Describe the image…" rows="1"></textarea>
+      </div>
+
+      <div class="gobar">
+        <button class="generate" id="btnGenerate"><span class="glyph">✦</span> <span id="genBtnLabel">Generate</span></button>
+        <button class="cancel" id="btnCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+
+  <!-- size sheet -->
+  <div class="sheet" id="sizeSheet">
+    <div class="grab"></div>
+    <div class="sheet-head"><h3>Image size</h3><button class="icon-btn close-x" data-close><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div class="sheet-body">
+      <div class="preset-grid" id="presetGrid"></div>
+      <div class="divider"><span class="eyebrow">Custom</span><span class="ln"></span></div>
+      <div class="row2">
+        <div class="field" style="margin:6px 0"><label>Width</label><input class="input mono" id="cw" inputmode="numeric" value="1024"></div>
+        <div class="field" style="margin:6px 0"><label>Height</label><input class="input mono" id="ch" inputmode="numeric" value="1024"></div>
+      </div>
+      <button class="btn full" id="applyCustom" style="margin-top:6px;">Use custom size</button>
+    </div>
+  </div>
+
+  <!-- per-workflow inputs sheet -->
+  <div class="sheet" id="inputsSheet">
+    <div class="grab"></div>
+    <div class="sheet-head"><h3 id="inputsTitle">Inputs</h3><button class="icon-btn close-x" data-close><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div class="sheet-body" id="inputsBody"></div>
+  </div>
+
+  <!-- import sheet -->
+  <div class="sheet" id="importSheet">
+    <div class="grab"></div>
+    <div class="sheet-head"><h3 id="importTitle">Set up workflow</h3><button class="icon-btn close-x" data-close><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div class="sheet-body">
+      <p id="importLead" style="color:var(--muted); font-size:13.5px; margin:2px 0 4px; line-height:1.55;"></p>
+      <ol class="steps">
+        <li>In ComfyUI on your computer, open this workflow.</li>
+        <li>Open <b>Settings</b> and turn on <b>“Enable dev mode options”</b>.</li>
+        <li>Click <b>Save (API Format)</b> — it downloads a <code>.json</code>.</li>
+        <li>Paste it below (or pick the file), then <b>Save</b>.</li>
+      </ol>
+      <div class="inline" style="margin:6px 0 2px;">
+        <button class="btn" id="importPick">Pick .json file</button>
+        <input id="importFile" type="file" accept=".json,application/json" style="display:none">
+        <span class="grow" style="flex:1"></span>
+        <button class="btn ghost" id="importClear">Clear</button>
+      </div>
+      <div class="field" style="margin:10px 0 6px;">
+        <textarea class="input mono" id="importJson" rows="7" placeholder='Paste the API-format JSON here…' style="font-size:12px; line-height:1.5;"></textarea>
+      </div>
+      <div class="mapline" id="importMap"></div>
+      <div class="testline" id="importMsg"></div>
+      <button class="btn primary full" id="importSave" style="margin-top:12px;">Save workflow</button>
+    </div>
+  </div>
+
+  <!-- settings sheet -->
+  <div class="sheet" id="settingsSheet">
+    <div class="grab"></div>
+    <div class="sheet-head"><h3>Settings</h3><button class="icon-btn close-x" data-close><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div class="sheet-body">
+      <div class="field">
+        <label>ComfyUI server address</label>
+        <div class="inline">
+          <input class="input mono" id="setServer" placeholder="http://100.116.157.100:8188" autocapitalize="off" autocomplete="off" spellcheck="false">
+          <button class="btn" id="btnTest">Test</button>
+        </div>
+        <div class="testline" id="testLine"></div>
+        <div class="testline" id="vramLine" style="margin-top:2px;"></div>
+      </div>
+
+      <details class="help">
+        <summary>Z-Image advanced <span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg></span></summary>
+        <div class="help-body">
+          <div class="row3">
+            <div class="field" style="margin:6px 0"><label>Steps</label><input class="input mono" id="setSteps" inputmode="numeric" value="8"></div>
+            <div class="field" style="margin:6px 0"><label>CFG</label><input class="input mono" id="setCfg" inputmode="decimal" value="1"></div>
+            <div class="field" style="margin:6px 0"><label>Shift</label><input class="input mono" id="setShift" inputmode="decimal" value="3"></div>
+          </div>
+          <div class="row2">
+            <div class="field" style="margin:6px 0"><label>Sampler</label><select class="input" id="setSampler"></select></div>
+            <div class="field" style="margin:6px 0"><label>Scheduler</label><select class="input" id="setScheduler"></select></div>
+          </div>
+          <div class="field" style="margin:6px 0"><label>Quality boost text</label><textarea class="input" id="setQuality" rows="3" style="font-size:14px; line-height:1.5;"></textarea></div>
+          <div class="field" style="margin:6px 0"><label>Diffusion model (unet)</label><input class="input mono" id="setUnet" autocapitalize="off" spellcheck="false"></div>
+          <div class="row2">
+            <div class="field" style="margin:6px 0"><label>Text encoder (clip)</label><input class="input mono" id="setClip" autocapitalize="off" spellcheck="false"></div>
+            <div class="field" style="margin:6px 0"><label>CLIP type</label><input class="input mono" id="setClipType" autocapitalize="off" spellcheck="false"></div>
+          </div>
+          <div class="row2">
+            <div class="field" style="margin:6px 0"><label>VAE</label><input class="input mono" id="setVae" autocapitalize="off" spellcheck="false"></div>
+            <div class="field" style="margin:6px 0"><label>Filename prefix</label><input class="input mono" id="setPrefix" autocapitalize="off" spellcheck="false"></div>
+          </div>
+        </div>
+      </details>
+
+      <div class="divider"><span class="eyebrow">Server &amp; memory</span><span class="ln"></span></div>
+      <div class="inline" style="gap:10px; flex-wrap:wrap;">
+        <button class="btn primary" id="btnFree2">Free GPU memory</button>
+        <button class="btn ghost" id="btnRefreshVram">Refresh VRAM</button>
+      </div>
+      <p style="font-size:12px; color:var(--muted-2); margin:10px 2px 0; line-height:1.5;">Tells ComfyUI to unload models and free VRAM on your machine. Your next Generate reloads them automatically.</p>
+
+      <div class="divider"><span class="eyebrow">Maintenance</span><span class="ln"></span></div>
+      <div class="inline" style="gap:10px; flex-wrap:wrap;">
+        <button class="btn danger" id="btnReset">Reset settings</button>
+        <button class="btn ghost" id="btnClearGallery">Clear all results</button>
+        <button class="btn ghost" id="btnForget">Forget imported workflows</button>
+      </div>
+
+      <details class="help">
+        <summary>Setup &amp; troubleshooting <span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg></span></summary>
+        <div class="help-body">
+          <p>Start ComfyUI on the host so this phone can reach it over Tailscale:</p>
+          <span class="cmd">python main.py --listen --enable-cors-header</span>
+          <ul>
+            <li><b>--listen</b> binds ComfyUI to your tailnet (not just localhost).</li>
+            <li><b>--enable-cors-header</b> lets this app talk to it.</li>
+          </ul>
+          <p>Open this page <b>over http or as a local file</b> (not https) on a device on the same Tailscale network. The address above is your Tailscale IP and port, e.g. <code>http://100.116.157.100:8188</code>.</p>
+          <p>If a local file won’t connect on your phone, serve it from the host:</p>
+          <span class="cmd">python -m http.server 8189</span>
+          <p>…then open <code>http://100.116.157.100:8189/studio.html</code>.</p>
+          <p style="margin-top:12px;"><b>Add to your Home Screen:</b> iPhone → Share → <i>Add to Home Screen</i>. Android Chrome → ⋮ → <i>Add to Home screen</i>. It then opens full-screen like an app.</p>
+          <p style="margin-top:10px; color:var(--muted-2);">Z-Image runs out of the box. The other workflows run after you import their API JSON once (the button on each tab).</p>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <!-- fullscreen viewer -->
+  <div class="viewer" id="viewer">
+    <div class="viewer-top">
+      <button class="icon-btn" id="viewerClose"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      <span class="read mono" id="viewerMeta"></span>
+    </div>
+    <div class="viewer-body"><img id="viewerImg" alt=""><video id="viewerVideo" controls playsinline style="display:none"></video></div>
+    <div class="viewer-actions">
+      <button class="act" id="viewerOpen"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M10 14 21 3M21 14v7H3V3h7"/></svg>Open</button>
+      <button class="act primary" id="viewerDownload"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>Save</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  var enc = encodeURIComponent;
+
+  /* ============ prompt defaults (from the screenshots) ============ */
+  var P_ANIMA = "Anime monochrome cyberpunk front portrait, male figure, sleek skin with delicate mechanical lines, piercing glowing eyes, partial exposed metallic mecha components and light cables, sharp domineering cool style, textured anime brushwork, faint circuit background, high contrast chiaroscuro lighting, immersive cinematic shadows, ultra fine details, 8K high-def render, futuristic dystopian mood";
+  var P_ICLORA = "A slow forward dolly shot on a bright, sunlit day in a lush jungle ruin. A lone figure in nature-themed armor stands before a weathered stone arch overgrown with ivy. A textured marble sphere wrapped in twisting vines levitates in the arch's center, spinning slowly. As the camera glides forward, vines sway softly, leaves flutter in the light breeze. Strong golden sunlight streams through the canopy, illuminating the mossy ruins with bright, clear light. The scene feels vibrant and peaceful, with subtle natural motion.";
+  var P_IDLORA = "[VISUAL]: Opens with a medium shot, camera slowly pushes in toward the character. A man with short dark hair and round glasses, wearing a retro orange floral shirt, looks directly at the camera, his mouth opens and closes naturally as he speaks, tilts his head playfully.\n[SPEECH]: Hey, what do you think of this vibe? Feels like we're back in the 90s.\n[SOUNDS]: Playful and upbeat tone, moderate volume, close to the microphone.";
+  var P_ERNIE = "A stylized cinematic side-profile medium shot portrait of a young European woman with sleek dark hair in a tight low bun, wearing a crisp white ruffled-collar shirt, eyes closed in serene contemplation, standing against a moody, dark gradient deep indigo-blue twilight sky with layered misty mountain silhouettes in the background, extreme high-contrast split neon lighting: 95% of the scene bathed in deep, saturated cool cyan-blue ambient light (dim, moody, low-key), with a sharp, intense, vivid neon pink-orange rim light tracing her facial profile, neck, and collar, creating bold color blocking and a surreal, artistic aesthetic, minimalist composition, high-fashion editorial, 8K, ultra-sharp focus on subject, moody desaturated blue tones, dramatic contrast, atmospheric depth, tranquil introspective vibe, dark atmospheric background, no overexposure, stylized color grading, neon rim light glow, low-key cool fill light.";
+  var P_HIDREAM = "Transform the background into a rainy neon city street at night, with wet asphalt reflections, blurred neon signs";
+
+  /* ============ defaults & registry ============ */
+  var DEFAULTS = {
+    server: "http://100.116.157.100:8188",
+    steps: 8, cfg: 1, shift: 3,
+    sampler: "res_multistep", scheduler: "simple",
+    unet: "z_image_turbo_bf16.safetensors",
+    clip: "qwen_3_4b.safetensors",
+    clipType: "lumina2",
+    vae: "ae.safetensors",
+    prefix: "z-image-turbo",
+    quality: "Technical Specifications: Photorealistic rendering, extremely detailed textures (fabric, skin, plastic, metal), complex composition, cinematic depth of field, high-resolution textures."
+  };
+  var SAMPLERS = ["res_multistep","euler","euler_ancestral","dpmpp_2m","dpmpp_2m_sde","dpmpp_3m_sde","dpmpp_sde","heun","ddim","uni_pc","lcm"];
+  var SCHEDULERS = ["simple","normal","karras","sgm_uniform","beta","exponential","ddim_uniform"];
+  var PRESETS = [
+    {name:"Square",w:1024,h:1024},{name:"Portrait",w:832,h:1216},{name:"Landscape",w:1216,h:832},
+    {name:"Wide",w:1344,h:768},{name:"Tall",w:768,h:1344},{name:"Cinema",w:1280,h:704}
+  ];
+  var EXAMPLES = [
+    "A DJ at a neon-lit club, photoreal, shallow depth of field",
+    "Golden-hour portrait of a woman, 85mm, soft window light",
+    "Misty pine forest at dawn, cinematic, volumetric light"
+  ];
+
+  // icons for the tab glyphs
+  var GI_IMG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5L8 19"/></svg>';
+  var GI_VID = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="14" height="14" rx="2"/><path d="m16 9 6-3v12l-6-3z"/></svg>';
+  var GI_EDIT = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l9-9"/><path d="M14.5 6.5l3 3"/><path d="M18 2l1 2 2 1-2 1-1 2-1-2-2-1z"/><path d="M5 7l.7 1.4L7.4 9.1 6 9.8 5.3 11.2 4.6 9.8 3.2 9.1 4.6 8.4z"/></svg>';
+
+  // Each workflow: id, label, type sub, kind, gradient/accent, fields, optional builtin builder,
+  // optional inputs config for the inputs sheet, and per-field defaults.
+  var WORKFLOWS = [
+    {
+      id:"zimage", label:"Z-Image", sub:"text → image", kind:"image", glyph:GI_IMG,
+      grad:"linear-gradient(105deg,#FF6A3D,#B14BFF)", accent:"#B14BFF",
+      fields:["size","seed","quality"],
+      placeholder:"Describe the image… e.g. a DJ at a neon-lit club, photoreal",
+      defaults:{ prompt:"", width:1024, height:1024, seedMode:"random", quality:false },
+      builtin:true,
+      build:function(prompt, seed, s){
+        return {
+          "3":{class_type:"KSampler",inputs:{seed:seed,steps:num(settings.steps,8),cfg:num(settings.cfg,1),sampler_name:settings.sampler||"res_multistep",scheduler:settings.scheduler||"simple",denoise:1,model:["11",0],positive:["27",0],negative:["33",0],latent_image:["13",0]}},
+          "8":{class_type:"VAEDecode",inputs:{samples:["3",0],vae:["29",0]}},
+          "9":{class_type:"SaveImage",inputs:{filename_prefix:settings.prefix||"z-image-turbo",images:["8",0]}},
+          "11":{class_type:"ModelSamplingAuraFlow",inputs:{shift:num(settings.shift,3),model:["28",0]}},
+          "13":{class_type:"EmptySD3LatentImage",inputs:{width:s.width,height:s.height,batch_size:1}},
+          "27":{class_type:"CLIPTextEncode",inputs:{text:prompt,clip:["30",0]}},
+          "28":{class_type:"UNETLoader",inputs:{unet_name:settings.unet,weight_dtype:"default"}},
+          "29":{class_type:"VAELoader",inputs:{vae_name:settings.vae}},
+          "30":{class_type:"CLIPLoader",inputs:{clip_name:settings.clip,type:settings.clipType||"lumina2",device:"default"}},
+          "33":{class_type:"ConditioningZeroOut",inputs:{conditioning:["27",0]}}
+        };
+      }
+    },
+    {
+      id:"anima", label:"Anima", sub:"text → image", kind:"image", glyph:GI_IMG,
+      grad:"linear-gradient(105deg,#6d7bf5,#a855f7)", accent:"#8a7bff",
+      fields:["size","seed"],
+      placeholder:"Describe the image…",
+      defaults:{ prompt:P_ANIMA, width:1024, height:1024, seedMode:"random" }
+      // needs imported JSON (custom Anima subgraph)
+    },
+    {
+      id:"ernie", label:"Ernie", sub:"text → image", kind:"image", glyph:GI_IMG,
+      grad:"linear-gradient(105deg,#22d3ee,#3b82f6)", accent:"#38bdf8",
+      fields:["size","seed"],
+      placeholder:"Describe the image…",
+      defaults:{ prompt:P_ERNIE, width:1024, height:1024, seedMode:"random" }
+      // needs imported JSON (Ernie Image Turbo subgraph)
+    },
+    {
+      id:"hidream", label:"HiDream", sub:"image / edit", kind:"image", glyph:GI_EDIT,
+      grad:"linear-gradient(105deg,#f59e0b,#ef4444)", accent:"#fb923c",
+      fields:["size","seed","inputs"],
+      placeholder:"Describe the image, or how to edit the input photo…",
+      defaults:{ prompt:P_HIDREAM, width:2048, height:2048, seedMode:"random", image:"noir_portrait.png" },
+      inputs:[
+        {type:"image", key:"image", label:"Input image (for image-edit mode)", hint:"Optional. Used when this workflow runs in Image-Edit mode (the “Switch to Image Edit” toggle in ComfyUI)."}
+      ]
+    },
+    {
+      id:"iclora", label:"IC-LoRA", sub:"depth → video", kind:"video", glyph:GI_VID,
+      grad:"linear-gradient(105deg,#39D98A,#2dd4bf)", accent:"#2dd4bf",
+      fields:["size","seed","inputs"],
+      placeholder:"Describe the motion and scene…",
+      defaults:{ prompt:P_ICLORA, width:1280, height:704, seedMode:"fixed", seed:0, fps:25, image:"the_forgotten_gate.png", video:"stone_ruins.mp4" },
+      inputs:[
+        {type:"image", key:"image", label:"First frame image"},
+        {type:"file",  key:"video", label:"Control video", hint:"Filename already in ComfyUI/input (the depth guide source)."},
+        {type:"num",   key:"fps",   label:"FPS"}
+      ]
+    },
+    {
+      id:"idlora", label:"ID-LoRA", sub:"talking video", kind:"video", glyph:GI_VID,
+      grad:"linear-gradient(105deg,#f472b6,#a855f7)", accent:"#e879c6",
+      fields:["size","seed","inputs"],
+      placeholder:"Use [VISUAL]: … [SPEECH]: … [SOUNDS]: …",
+      defaults:{ prompt:P_IDLORA, width:1280, height:720, seedMode:"random", fps:25, duration:10, image:"vintage_thinker.png", audio:"ltx23_reference_audio.mp3" },
+      inputs:[
+        {type:"image", key:"image",    label:"First frame image"},
+        {type:"file",  key:"audio",    label:"Reference audio", hint:"Filename already in ComfyUI/input (drives the lip-sync)."},
+        {type:"num",   key:"fps",      label:"FPS"},
+        {type:"num",   key:"duration", label:"Duration (seconds)"}
+      ]
+    }
+  ];
+  function wfDef(id){ for(var i=0;i<WORKFLOWS.length;i++) if(WORKFLOWS[i].id===id) return WORKFLOWS[i]; return WORKFLOWS[0]; }
+
+  /* ============ storage ============ */
+  var LS = {
+    get:function(k,d){ try{ var v=localStorage.getItem(k); return v===null?d:JSON.parse(v); }catch(e){ return d; } },
+    set:function(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+  };
+  var settings = Object.assign({}, DEFAULTS, LS.get("cs_settings", {}));
+  var clientId = LS.get("cs_client", null);
+  if(!clientId){ clientId = (window.crypto&&crypto.randomUUID)?crypto.randomUUID():("c"+Date.now()+Math.random().toString(16).slice(2)); LS.set("cs_client", clientId); }
+  var imports = LS.get("cs_imports", {});     // id -> { graph }
+  var gallery = LS.get("cs_gallery", []);     // newest first, each tagged .wf
+
+  // per-workflow remembered state
+  var wfStates = LS.get("cs_wf", {});
+  WORKFLOWS.forEach(function(w){
+    var base = Object.assign({ prompt:"", width:1024, height:1024, seedMode:"random", seed:0, fps:25, duration:10, image:"", video:"", audio:"", quality:false, lastResult:null }, w.defaults||{});
+    if(typeof base.seed!=="number") base.seed = randSeed();
+    wfStates[w.id] = Object.assign(base, wfStates[w.id]||{});
+  });
+  var activeId = LS.get("cs_active", "zimage");
+  if(!wfDef(activeId)) activeId = "zimage";
+
+  function S(){ return wfStates[activeId]; }
+  function persist(){ LS.set("cs_wf", wfStates); LS.set("cs_active", activeId); }
+  function persistSettings(){ LS.set("cs_settings", settings); }
+
+  /* ============ helpers ============ */
+  function randSeed(){ return Math.floor(Math.random()*1e15); }
+  function clampSeed(n){ n=Math.floor(Number(n)||0); if(n<0)n=0; if(n>999999999999999)n=999999999999999; return n; }
+  function num(v,d){ var n=Number(v); return isFinite(n)?n:d; }
+  function baseUrl(){ return (settings.server||"").trim().replace(/\/+$/,""); }
+  function wsUrl(){ return baseUrl().replace(/^http/i,"ws")+"/ws?clientId="+enc(clientId); }
+  function clone(o){ return JSON.parse(JSON.stringify(o)); }
+  function extOf(name){ var m=(name||"").toLowerCase().match(/\.([a-z0-9]+)(?:\?|$)/); return m?m[1]:""; }
+  function isVideoFile(name){ return ["mp4","webm","mov","m4v"].indexOf(extOf(name))>=0; }
+  function viewUrl(item, bust){
+    var u = baseUrl()+"/view?filename="+enc(item.filename)+"&type="+enc(item.type||"output");
+    if(item.subfolder) u += "&subfolder="+enc(item.subfolder);
+    if(bust) u += "&r="+Date.now();
+    return u;
+  }
+  async function api(path, opts){
+    var res = await fetch(baseUrl()+path, opts);
+    if(!res.ok){ var t=await res.text().catch(function(){return "";}); throw new Error("HTTP "+res.status+(t?": "+t.slice(0,160):"")); }
+    var ct = res.headers.get("content-type")||"";
+    return ct.indexOf("json")>=0 ? res.json() : res.text();
+  }
+  var toastTimer=null;
+  function toast(msg, isErr){ var t=$("toast"); t.textContent=msg; t.className="toast show"+(isErr?" err":""); clearTimeout(toastTimer); toastTimer=setTimeout(function(){ t.className="toast"+(isErr?" err":""); },2800); }
+
+  /* ============ imported-graph mapping ============ */
+  function detectMap(graph){
+    var map={prompt:null,promptKey:null,seedNode:null,seedKey:null,size:null,fps:null,dur:null,image:null,video:null,videoKey:null,audio:null};
+    var promptLen=-1;
+    for(var id in graph){
+      var n=graph[id]; if(!n||!n.inputs) continue;
+      var ct=(n.class_type||"")+""; var inp=n.inputs;
+      // prompt = longest editable string on a text/prompt-ish node (handles CLIPTextEncode + String primitives)
+      if(/CLIPTextEncode|TextEncode|T5|Prompt|String|Text/i.test(ct)){
+        ["text","value","string","prompt"].forEach(function(pk){
+          if(typeof inp[pk]==="string" && inp[pk].length>promptLen){ promptLen=inp[pk].length; map.prompt=id; map.promptKey=pk; }
+        });
+      }
+      if(map.seedNode===null){
+        if(inp.seed!==undefined && typeof inp.seed!=="object"){ map.seedNode=id; map.seedKey="seed"; }
+        else if(inp.noise_seed!==undefined && typeof inp.noise_seed!=="object"){ map.seedNode=id; map.seedKey="noise_seed"; }
+      }
+      if(map.size===null && inp.width!==undefined && inp.height!==undefined && typeof inp.width!=="object"){ map.size=id; }
+      if(map.fps===null && inp.fps!==undefined && typeof inp.fps!=="object"){ map.fps=id; }
+      if(map.dur===null && inp.duration!==undefined && typeof inp.duration!=="object"){ map.dur=id; }
+      if(map.image===null && /LoadImage/i.test(ct) && typeof inp.image==="string"){ map.image=id; }
+      if(map.video===null && /LoadVideo|VHS/i.test(ct)){
+        if(typeof inp.video==="string"){ map.video=id; map.videoKey="video"; }
+        else if(typeof inp.file==="string"){ map.video=id; map.videoKey="file"; }
+      }
+      if(map.audio===null && /LoadAudio/i.test(ct) && typeof inp.audio==="string"){ map.audio=id; }
+    }
+    return map;
+  }
+  function applyMap(graph, f, map, wf){
+    if(map.prompt && f.prompt!=null) graph[map.prompt].inputs[map.promptKey||"text"] = f.prompt;
+    if(map.seedNode && f.seed!=null) graph[map.seedNode].inputs[map.seedKey] = f.seed;
+    if(map.size && f.width!=null){ graph[map.size].inputs.width=f.width; graph[map.size].inputs.height=f.height; }
+    if(map.fps && f.fps!=null) graph[map.fps].inputs.fps = num(f.fps, graph[map.fps].inputs.fps);
+    if(map.dur && f.duration!=null) graph[map.dur].inputs.duration = num(f.duration, graph[map.dur].inputs.duration);
+    if(map.image && f.image) graph[map.image].inputs.image = f.image;
+    if(map.video && f.video) graph[map.video].inputs[map.videoKey] = f.video;
+    if(map.audio && f.audio) graph[map.audio].inputs.audio = f.audio;
+    return graph;
+  }
+  function parseGraph(text){
+    var j = JSON.parse(text);
+    if(j && j.prompt && typeof j.prompt==="object" && !Array.isArray(j.prompt)) j = j.prompt; // some exports wrap in {prompt:...}
+    // sanity: looks like an api graph (values have class_type)
+    var ok=false; for(var k in j){ if(j[k] && j[k].class_type){ ok=true; break; } }
+    if(!ok) throw new Error("That doesn't look like an API-format workflow (no class_type nodes). Use ComfyUI → Save (API Format).");
+    return j;
+  }
+
+  /* ============ websocket (engine, unchanged core) ============ */
+  var ws=null, wsRetry=0, wsTimer=null, wantWs=true;
+  var wsSubs = new Set();
+  var busy=false, currentPromptId=null;
+  function setStatus(s,text){ var el=$("status"); el.dataset.state=s; $("statusText").textContent=text||s; }
+  function connectWs(){
+    if(!wantWs) return;
+    try{ if(ws){ ws.onclose=null; ws.close(); } }catch(e){}
+    setStatus("connecting","connecting");
+    try{ ws=new WebSocket(wsUrl()); }catch(e){ scheduleReconnect(); return; }
+    ws.binaryType="arraybuffer";
+    ws.onopen=function(){ wsRetry=0; setStatus("online","online"); };
+    ws.onclose=function(){ setStatus("offline","offline"); scheduleReconnect(); };
+    ws.onerror=function(){};
+    ws.onmessage=function(ev){
+      if(typeof ev.data==="string"){ var m; try{ m=JSON.parse(ev.data); }catch(e){ return; } wsSubs.forEach(function(fn){ try{ fn(m); }catch(e){} }); }
+      else handleBinaryPreview(ev.data);
+    };
+  }
+  function scheduleReconnect(){ if(!wantWs) return; clearTimeout(wsTimer); var delay=Math.min(2000*Math.pow(1.6,wsRetry++),15000); wsTimer=setTimeout(connectWs,delay); }
+  function handleBinaryPreview(buf){
+    if(!busy) return;
+    try{
+      if(buf.byteLength<=8) return;
+      var dv=new DataView(buf);
+      if(dv.getUint32(0,false)!==1) return;
+      var fmt=dv.getUint32(4,false);
+      var blob=new Blob([buf.slice(8)],{type:fmt===2?"image/png":"image/jpeg"});
+      var img=$("previewImg"); var old=img.dataset.objUrl; var url=URL.createObjectURL(blob);
+      img.src=url; img.style.opacity=".9"; img.dataset.objUrl=url;
+      if(old) setTimeout(function(){ URL.revokeObjectURL(old); },400);
+    }catch(e){}
+  }
+
+  function setProgress(frac,label){
+    var pbar=$("pbar"),pfill=$("pfill"),pct=$("genPct"),gl=$("genLabel");
+    if(label!==undefined) gl.textContent=label;
+    if(frac===null||isNaN(frac)){ pbar.classList.add("indeterminate"); pct.textContent=""; }
+    else{ pbar.classList.remove("indeterminate"); var p=Math.max(0,Math.min(1,frac)); pfill.style.width=(p*100).toFixed(0)+"%"; pct.textContent=Math.round(p*100)+"%"; }
+  }
+
+  async function fetchHistoryOutputs(promptId){
+    var hh = await api("/history/"+promptId);
+    var entry = hh && hh[promptId];
+    if(!entry || !entry.outputs) return null;
+    var out=[];
+    for(var node in entry.outputs){
+      var o=entry.outputs[node];
+      ["images","gifs","videos"].forEach(function(key){
+        if(o && o[key]) o[key].forEach(function(im){ if(im && im.type!=="temp") out.push(im); });
+      });
+    }
+    return out.length?out:null;
+  }
+  function waitForResult(promptId){
+    return new Promise(function(resolve,reject){
+      var done=false,poll=null,timeout=null;
+      var finish=function(fn,arg){ if(done)return; done=true; wsSubs.delete(onMsg); clearInterval(poll); clearTimeout(timeout); fn(arg); };
+      var tryHistory=function(){ fetchHistoryOutputs(promptId).then(function(o){ if(o&&o.length) finish(resolve,o); }).catch(function(){}); };
+      var onMsg=function(m){
+        var d=m.data||{};
+        switch(m.type){
+          case "execution_start": if(d.prompt_id===promptId) setProgress(null,"rendering"); break;
+          case "progress": if(d.max){ setProgress(d.value/d.max,"rendering"); } break;
+          case "progress_state": { var nodes=d.nodes||{},best=null; for(var k in nodes){ var n=nodes[k]; if(n&&n.max){ if(n.state==="running"||!best) best=n; } } if(best&&best.max) setProgress(best.value/best.max,"rendering"); break; }
+          case "executed": if(d.prompt_id===promptId && d.output){ fetchHistoryOutputs(promptId).then(function(o){ if(o&&o.length) finish(resolve,o); }).catch(function(){}); } break;
+          case "execution_error": if(d.prompt_id===promptId) finish(reject,new Error(d.exception_message||("Error in "+(d.node_type||"node")))); break;
+          case "execution_interrupted": if(d.prompt_id===promptId){ var e=new Error("interrupted"); e.code="interrupted"; finish(reject,e); } break;
+          case "executing": if(d.prompt_id===promptId && d.node===null){ fetchHistoryOutputs(promptId).then(function(o){ if(o&&o.length) finish(resolve,o); else finish(reject,new Error("Render finished but returned no media.")); }).catch(function(err){ finish(reject,err); }); } break;
+        }
+      };
+      wsSubs.add(onMsg);
+      poll=setInterval(tryHistory,1600);
+      timeout=setTimeout(function(){ finish(reject,new Error("Timed out after 6 minutes.")); },360000);
+    });
+  }
+
+  /* ============ generate ============ */
+  function computeSeedForRun(s){
+    if(s.seedMode==="random") return randSeed();
+    if(s.seedMode==="increment") return clampSeed(s.seed+1);
+    return clampSeed(s.seed);
+  }
+  function needsSetup(wf){ return !wf.builtin && !(imports[wf.id] && imports[wf.id].graph); }
+
+  async function generate(){
+    if(busy) return;
+    var wf=wfDef(activeId), s=S();
+    var raw=$("promptInput").value.trim();
+    if(!raw){ toast("Type a prompt first"); $("promptInput").focus(); return; }
+    if(!baseUrl()){ toast("Set the server address in Settings", true); openSheet("settingsSheet"); return; }
+    if(needsSetup(wf)){ openImport(wf.id); return; }
+
+    s.prompt=raw;
+    var seed=computeSeedForRun(s); s.seed=seed; $("seedField").value=String(seed); persist();
+
+    // build graph
+    var graph;
+    if(wf.builtin){
+      var p=raw;
+      if(s.quality && settings.quality) p = raw.replace(/\s+$/,"")+"\n"+settings.quality;
+      graph = wf.build(p, seed, s);
+    } else {
+      graph = clone(imports[wf.id].graph);
+      var map = detectMap(graph);
+      applyMap(graph, { prompt:raw, seed:seed, width:s.width, height:s.height, fps:s.fps, duration:s.duration, image:s.image, video:s.video, audio:s.audio }, map, wf);
+    }
+
+    busy=true; document.body.dataset.busy="1"; $("previewImg").style.opacity="0"; setProgress(null,"queued");
+    if(!ws || ws.readyState!==1) connectWs();
+
+    var promptId;
+    try{
+      var res = await api("/prompt",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ prompt:graph, client_id:clientId }) });
+      if(res.node_errors && Object.keys(res.node_errors).length){
+        var first=Object.values(res.node_errors)[0];
+        throw new Error((first&&first.errors&&first.errors[0]&&first.errors[0].message)||"Workflow rejected by ComfyUI.");
+      }
+      promptId=res.prompt_id;
+    }catch(err){ endBusy(); showConnError(err); return; }
+    currentPromptId=promptId;
+
+    try{
+      var items = await waitForResult(promptId);
+      var it = items[items.length-1];
+      var kind = (it._fromVideo || isVideoFile(it.filename) || extOf(it.filename)==="gif") ? (isVideoFile(it.filename)?"video":"image") : "image";
+      if(isVideoFile(it.filename)) kind="video";
+      var result = { kind:kind, url:viewUrl(it,true), dl:viewUrl(it,false), filename:it.filename, seed:seed, prompt:raw, width:s.width, height:s.height, wf:wf.id, ts:Date.now() };
+      s.lastResult=result; persist();
+      showResult(result, true);
+      addToGallery(result);
+    }catch(err){
+      if(err && err.code==="interrupted") toast("Canceled");
+      else toast(err.message||"Generation failed", true);
+    }finally{ endBusy(); }
+  }
+  function endBusy(){ busy=false; document.body.dataset.busy="0"; currentPromptId=null; setProgress(null,"queued"); $("pbar").classList.add("indeterminate"); $("pfill").style.width="0%"; $("previewImg").style.opacity="0"; }
+  function showConnError(err){ toast("Can’t reach ComfyUI. Check the address & that it ran with --listen --enable-cors-header.", true); setStatus("offline","offline"); if(window.console) console.warn("ComfyUI request failed:", (err&&err.message)||err); }
+  async function cancelGen(){ if(!busy) return; try{ await fetch(baseUrl()+"/interrupt",{method:"POST"}); }catch(e){} toast("Canceling…"); }
+
+  // ---------- server memory ----------
+  async function freeMemory(){
+    if(!baseUrl()){ toast("Set the server address first", true); openSheet("settingsSheet"); return; }
+    try{
+      await fetch(baseUrl()+"/free",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ unload_models:true, free_memory:true }) });
+      toast(busy ? "Will free GPU memory after this render" : "Freed GPU memory — models unloaded");
+      setTimeout(refreshVram, 600);
+    }catch(e){ toast("Couldn’t reach the server to free memory", true); }
+  }
+  async function refreshVram(){
+    var line=$("vramLine"); if(!line) return;
+    if(!baseUrl()){ line.textContent=""; return; }
+    try{
+      var s=await api("/system_stats");
+      var d = s && s.devices && s.devices[0];
+      if(d && d.vram_total){
+        var free=d.vram_free/1073741824, tot=d.vram_total/1073741824;
+        line.className="testline"; line.textContent="VRAM "+free.toFixed(1)+" / "+tot.toFixed(1)+" GB free"+(d.name?"  ·  "+d.name:"");
+      } else { line.textContent=""; }
+    }catch(e){ line.textContent=""; }
+  }
+
+  /* ============ result rendering ============ */
+  function clearStage(){ var st=$("stage"); st.classList.remove("has-img"); st.classList.remove("has-vid"); }
+  function showResult(r, fresh){
+    var st=$("stage"), img=$("resultImg"), vid=$("resultVideo");
+    st.style.aspectRatio = r.width+"/"+r.height;
+    if(r.kind==="video"){
+      st.classList.remove("has-img");
+      vid.onloadeddata=function(){ st.classList.add("has-vid"); };
+      vid.src=r.url; vid.play().catch(function(){});
+      st.classList.add("has-vid");
+      vid.onclick=function(){ openViewer(r); };
+    } else {
+      st.classList.remove("has-vid");
+      img.onload=function(){ st.classList.add("has-img"); };
+      img.onerror=function(){ toast("Media is on the server but couldn’t display here.", true); };
+      img.src=r.url; st.classList.add("has-img");
+      img.onclick=function(){ openViewer(r); };
+    }
+    $("readSeed").innerHTML="seed <b>"+r.seed+"</b>";
+    $("readDim").innerHTML="<b>"+r.width+"×"+r.height+"</b>";
+    $("btnDownload").classList.remove("hidden");
+    $("btnExpand").classList.remove("hidden");
+    var past=!fresh;
+    $("btnUsePrompt").classList.toggle("hidden", !past);
+    $("btnUseSeed").classList.toggle("hidden", !past);
+  }
+  function addToGallery(r){
+    gallery.unshift({ kind:r.kind, url:r.url, dl:r.dl, filename:r.filename, seed:r.seed, prompt:r.prompt, width:r.width, height:r.height, wf:r.wf, ts:r.ts });
+    if(gallery.length>60) gallery=gallery.slice(0,60);
+    LS.set("cs_gallery", gallery); renderStrip();
+  }
+  var PLAY='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  function renderStrip(){
+    var strip=$("strip");
+    var items=gallery.filter(function(g){ return g.wf===activeId; });
+    if(!items.length){ strip.innerHTML='<span class="strip-empty">No results yet</span>'; return; }
+    strip.innerHTML="";
+    items.forEach(function(g){
+      var b=document.createElement("button");
+      b.className="thumb"+(S().lastResult && S().lastResult.ts===g.ts?" active":"");
+      if(g.kind==="video"){ var v=document.createElement("video"); v.src=g.url; v.muted=true; v.playsInline=true; b.appendChild(v); var bd=document.createElement("span"); bd.className="vbadge"; bd.innerHTML=PLAY; b.appendChild(bd); }
+      else { var im=document.createElement("img"); im.src=g.url; im.loading="lazy"; im.alt=""; b.appendChild(im); }
+      b.onclick=function(){ S().lastResult=g; persist(); showResult(g,false); renderStrip(); document.querySelector("main").scrollTo({top:0,behavior:"smooth"}); };
+      strip.appendChild(b);
+    });
+  }
+
+  /* ============ viewer ============ */
+  function openViewer(r){
+    var img=$("viewerImg"), vid=$("viewerVideo");
+    if(r.kind==="video"){ img.style.display="none"; vid.style.display=""; vid.src=r.url; vid.play().catch(function(){}); }
+    else { vid.style.display="none"; vid.pause(); img.style.display=""; img.src=r.url; }
+    $("viewerMeta").textContent="seed "+r.seed+"  ·  "+r.width+"×"+r.height;
+    $("viewer").classList.add("open");
+    var ext = isVideoFile(r.filename)?"mp4":(extOf(r.filename)||"png");
+    $("viewerDownload").onclick=function(){ download(r.dl||r.url, wfDef(r.wf).id+"-"+r.seed+"."+ext); };
+    $("viewerOpen").onclick=function(){ window.open(r.dl||r.url,"_blank"); };
+  }
+  $("viewerClose").onclick=function(){ $("viewerVideo").pause(); $("viewer").classList.remove("open"); };
+
+  async function download(url, name){
+    try{
+      var res=await fetch(url); var blob=await res.blob(); var u=URL.createObjectURL(blob);
+      var a=document.createElement("a"); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(u); },5000); toast("Saved "+name);
+    }catch(e){ window.open(url,"_blank"); toast("Opened — long-press to save"); }
+  }
+
+  /* ============ sheets ============ */
+  function openSheet(id){ $("scrim").classList.add("open"); $(id).classList.add("open"); }
+  function closeSheets(){ $("scrim").classList.remove("open"); document.querySelectorAll(".sheet").forEach(function(s){ s.classList.remove("open"); }); }
+  $("scrim").onclick=closeSheets;
+  document.querySelectorAll("[data-close]").forEach(function(b){ b.onclick=closeSheets; });
+
+  /* ============ composer wiring ============ */
+  var ta=$("promptInput");
+  function autoGrow(){ ta.style.height="auto"; ta.style.height=Math.min(ta.scrollHeight, window.innerHeight*0.34)+"px"; }
+  ta.addEventListener("input",function(){ S().prompt=ta.value; autoGrow(); });
+  ta.addEventListener("keydown",function(e){ if((e.metaKey||e.ctrlKey)&&e.key==="Enter"){ e.preventDefault(); generate(); }});
+  $("btnGenerate").onclick=generate;
+  $("btnCancel").onclick=cancelGen;
+
+  function setSeedMode(m){ S().seedMode=m; persist(); document.querySelectorAll("#seedSeg button").forEach(function(b){ b.classList.toggle("active", b.dataset.mode===m); }); }
+  document.querySelectorAll("#seedSeg button").forEach(function(b){ b.onclick=function(){ setSeedMode(b.dataset.mode); }; });
+  var seedField=$("seedField");
+  seedField.addEventListener("input",function(){ seedField.value=seedField.value.replace(/[^0-9]/g,""); });
+  seedField.addEventListener("change",function(){ S().seed=clampSeed(seedField.value); seedField.value=String(S().seed); if(S().seedMode==="random") setSeedMode("fixed"); persist(); });
+  $("btnDice").onclick=function(){ S().seed=randSeed(); seedField.value=String(S().seed); persist(); };
+
+  $("qualityBtn").onclick=function(){ S().quality=!S().quality; $("qualityBtn").classList.toggle("on", S().quality); persist(); toast(S().quality?"Quality boost on":"Quality boost off"); };
+
+  // examples
+  EXAMPLES.forEach(function(t){ var b=document.createElement("button"); b.className="ex"; b.textContent=t.length>34?t.slice(0,32)+"…":t; b.title=t; b.onclick=function(){ ta.value=t; S().prompt=t; autoGrow(); ta.focus(); persist(); }; $("examples").appendChild(b); });
+
+  /* ============ size sheet ============ */
+  function syncSizeLabel(){ var s=S(); $("sizeVal").textContent=s.width+"×"+s.height; $("stage").style.aspectRatio=s.width+"/"+s.height; }
+  function buildPresets(){
+    var grid=$("presetGrid"); grid.innerHTML="";
+    PRESETS.forEach(function(p){
+      var s=S(); var active=(p.w===s.width&&p.h===s.height);
+      var btn=document.createElement("button"); btn.className="preset"+(active?" active":"");
+      var maxd=40; var rw=p.w>=p.h?maxd:Math.round(maxd*p.w/p.h); var rh=p.h>=p.w?maxd:Math.round(maxd*p.h/p.w);
+      btn.innerHTML='<div class="ratio" style="width:'+rw+'px;height:'+rh+'px"></div><div class="name">'+p.name+'</div><div class="dim">'+p.w+'×'+p.h+'</div>';
+      btn.onclick=function(){ S().width=p.w; S().height=p.h; persist(); syncSizeLabel(); $("cw").value=p.w; $("ch").value=p.h; buildPresets(); closeSheets(); };
+      grid.appendChild(btn);
+    });
+  }
+  $("sizeBtn").onclick=function(){ $("cw").value=S().width; $("ch").value=S().height; buildPresets(); openSheet("sizeSheet"); };
+  $("applyCustom").onclick=function(){
+    var w=parseInt($("cw").value,10)||1024, h=parseInt($("ch").value,10)||1024;
+    w=Math.max(64,Math.min(4096,Math.round(w/8)*8)); h=Math.max(64,Math.min(4096,Math.round(h/8)*8));
+    S().width=w; S().height=h; persist(); syncSizeLabel(); closeSheets(); toast("Size set to "+w+"×"+h);
+  };
+
+  /* ============ per-workflow inputs sheet ============ */
+  async function uploadImage(file){
+    var fd=new FormData(); fd.append("image", file, file.name); fd.append("overwrite","true");
+    var res=await fetch(baseUrl()+"/upload/image",{ method:"POST", body:fd });
+    if(!res.ok) throw new Error("Upload failed ("+res.status+")");
+    var j=await res.json(); return j.name||file.name;
+  }
+  function buildInputsSheet(){
+    var wf=wfDef(activeId), s=S(), body=$("inputsBody"); body.innerHTML="";
+    $("inputsTitle").textContent=wf.label+" inputs";
+    (wf.inputs||[]).forEach(function(cfg){
+      var field=document.createElement("div"); field.className="field";
+      var lab=document.createElement("label"); lab.textContent=cfg.label; field.appendChild(lab);
+      if(cfg.type==="image"){
+        var rowEl=document.createElement("div"); rowEl.className="uploadrow";
+        var inp=document.createElement("input"); inp.className="input mono"; inp.value=s[cfg.key]||""; inp.placeholder="image filename in ComfyUI/input";
+        inp.autocapitalize="off"; inp.spellcheck=false;
+        inp.addEventListener("change",function(){ s[cfg.key]=inp.value.trim(); persist(); });
+        var up=document.createElement("button"); up.className="btn"; up.textContent="Upload";
+        var file=document.createElement("input"); file.type="file"; file.accept="image/*"; file.style.display="none";
+        up.onclick=function(){ if(!baseUrl()){ toast("Set the server address first", true); return; } file.click(); };
+        file.onchange=async function(){ var f=file.files[0]; if(!f) return; up.textContent="…"; try{ var name=await uploadImage(f); s[cfg.key]=name; inp.value=name; persist(); toast("Uploaded "+name); }catch(e){ toast(e.message||"Upload failed", true); } up.textContent="Upload"; };
+        rowEl.appendChild(inp); rowEl.appendChild(up); rowEl.appendChild(file);
+        field.appendChild(rowEl);
+      } else if(cfg.type==="num"){
+        var ni=document.createElement("input"); ni.className="input mono"; ni.inputMode="decimal"; ni.value=String(s[cfg.key]!=null?s[cfg.key]:"");
+        ni.addEventListener("change",function(){ s[cfg.key]=num(ni.value, s[cfg.key]); persist(); });
+        field.appendChild(ni);
+      } else { // file (filename only)
+        var fi=document.createElement("input"); fi.className="input mono"; fi.value=s[cfg.key]||""; fi.placeholder="filename in ComfyUI/input";
+        fi.autocapitalize="off"; fi.spellcheck=false;
+        fi.addEventListener("change",function(){ s[cfg.key]=fi.value.trim(); persist(); });
+        field.appendChild(fi);
+      }
+      if(cfg.hint){ var hint=document.createElement("div"); hint.className="hint"; hint.textContent=cfg.hint; field.appendChild(hint); }
+      body.appendChild(field);
+    });
+  }
+  $("inputsBtn").onclick=function(){ buildInputsSheet(); openSheet("inputsSheet"); };
+
+  /* ============ import sheet ============ */
+  var importTargetId=null;
+  function mapSummary(graph){
+    var m=detectMap(graph);
+    function tag(label, val){ return val? ('<span><b>'+label+'</b> #'+val+'</span>') : ('<span class="miss">'+label+' —</span>'); }
+    return tag("prompt",m.prompt)+tag("seed",m.seedNode)+tag("size",m.size)+(m.fps?tag("fps",m.fps):"")+(m.dur?tag("duration",m.dur):"")+(m.image?tag("image",m.image):"")+(m.video?tag("video",m.video):"")+(m.audio?tag("audio",m.audio):"");
+  }
+  function refreshImportMap(){
+    var msg=$("importMsg"), mapEl=$("importMap"); msg.textContent=""; msg.className="testline"; mapEl.innerHTML="";
+    var txt=$("importJson").value.trim(); if(!txt){ return; }
+    try{ var g=parseGraph(txt); mapEl.innerHTML="Detected: "+mapSummary(g); }
+    catch(e){ msg.className="testline err"; msg.textContent=e.message; }
+  }
+  function openImport(id){
+    importTargetId=id; var wf=wfDef(id);
+    $("importTitle").textContent="Set up "+wf.label;
+    $("importLead").textContent = wf.kind==="image"
+      ? (wf.label+" is a text→image workflow. Import its API JSON once and your prompt, size and seed map in automatically.")
+      : (wf.label+" uses custom video nodes. Import its API JSON once — prompt, size, seed"+(wf.id==="idlora"?", fps, duration":", fps")+", the first-frame image"+(wf.id==="idlora"?" and reference audio":" and control video")+" then map in from the controls.");
+    var existing = imports[id] && imports[id].graph;
+    $("importJson").value = existing ? JSON.stringify(existing, null, 1) : "";
+    refreshImportMap();
+    openSheet("importSheet");
+  }
+  $("importJson").addEventListener("input", refreshImportMap);
+  $("importPick").onclick=function(){ $("importFile").click(); };
+  $("importFile").onchange=function(){ var f=$("importFile").files[0]; if(!f) return; var r=new FileReader(); r.onload=function(){ $("importJson").value=String(r.result||""); refreshImportMap(); }; r.readAsText(f); };
+  $("importClear").onclick=function(){ $("importJson").value=""; refreshImportMap(); };
+  $("importSave").onclick=function(){
+    var txt=$("importJson").value.trim();
+    if(!txt){ $("importMsg").className="testline err"; $("importMsg").textContent="Paste the workflow JSON first."; return; }
+    var g; try{ g=parseGraph(txt); }catch(e){ $("importMsg").className="testline err"; $("importMsg").textContent=e.message; return; }
+    imports[importTargetId]={ graph:g }; LS.set("cs_imports", imports);
+    closeSheets(); renderTabs(); refreshComposerForWf(); toast(wfDef(importTargetId).label+" is set up ✓");
+  };
+
+  /* ============ tabs ============ */
+  function renderTabs(){
+    var el=$("tabs"); el.innerHTML="";
+    WORKFLOWS.forEach(function(wf){
+      var ready=!needsSetup(wf);
+      var t=document.createElement("button");
+      t.className="tab"+(wf.id===activeId?" active":"")+(ready?" ready":"");
+      t.style.setProperty("--accent", wf.accent);
+      var g=document.createElement("span"); g.className="tg"; g.style.background=wf.grad; g.innerHTML=wf.glyph; t.appendChild(g);
+      var tt=document.createElement("span"); tt.className="tt";
+      tt.innerHTML='<span class="tn">'+wf.label+'</span><span class="ts">'+wf.sub+'</span>'; t.appendChild(tt);
+      var su=document.createElement("span"); su.className="setup"; su.textContent="!"; su.title="Needs setup"; t.appendChild(su);
+      t.onclick=function(){ selectWf(wf.id); };
+      el.appendChild(t);
+    });
+  }
+
+  function refreshComposerForWf(){
+    var wf=wfDef(activeId), s=S();
+    // theme
+    document.documentElement.style.setProperty("--grad", wf.grad);
+    document.documentElement.style.setProperty("--accent", wf.accent);
+    document.documentElement.style.setProperty("--accent-soft", "color-mix(in srgb,"+wf.accent+" 16%, transparent)");
+    // controls visibility
+    $("qualityBtn").classList.toggle("hidden", wf.fields.indexOf("quality")<0);
+    $("qualityBtn").classList.toggle("on", !!s.quality);
+    $("inputsBtn").classList.toggle("hidden", wf.fields.indexOf("inputs")<0);
+    // prompt
+    ta.placeholder=wf.placeholder||"Describe…"; ta.value=s.prompt||""; autoGrow();
+    // seed + size
+    seedField.value=String(s.seed); document.querySelectorAll("#seedSeg button").forEach(function(b){ b.classList.toggle("active", b.dataset.mode===s.seedMode); });
+    syncSizeLabel();
+    // generate button label / setup state
+    var setup=needsSetup(wf);
+    $("genBtnLabel").textContent = setup ? ("Set up "+wf.label) : "Generate";
+    // empty-state + result
+    clearStage();
+    if(s.lastResult){ showResult(s.lastResult, false); }
+    else { showEmptyFor(wf, setup); }
+    // examples only for zimage
+    $("examples").style.display = (wf.id==="zimage") ? "" : "none";
+    // strip
+    $("stripLabel").textContent = wf.label+" · this session";
+    renderStrip();
+  }
+  function showEmptyFor(wf, setup){
+    if(setup){
+      $("emptyTitle").textContent="Set up "+wf.label;
+      $("emptyText").textContent="This workflow runs on your ComfyUI box. Import its API-format JSON once and it’s ready — your prompt and settings map in automatically.";
+      $("setupBtn").classList.remove("hidden"); $("setupBtn").textContent="Import "+wf.label+" workflow";
+    } else {
+      $("emptyTitle").textContent = wf.kind==="video" ? "Make a video" : "Make an image";
+      $("emptyText").textContent = wf.kind==="video" ? "Set your inputs, write a prompt, and tap Generate. Your clip renders here." : "Type a prompt below and tap Generate. Your image renders here.";
+      $("setupBtn").classList.add("hidden");
+    }
+  }
+  $("setupBtn").onclick=function(){ openImport(activeId); };
+
+  function selectWf(id){
+    if(busy){ toast("Hold on — still rendering"); return; }
+    activeId=id; persist(); renderTabs(); refreshComposerForWf();
+  }
+
+  /* ============ settings wiring ============ */
+  function fillSelect(sel,list,val){ sel.innerHTML=""; list.forEach(function(o){ var op=document.createElement("option"); op.value=o; op.textContent=o; sel.appendChild(op); }); if(list.indexOf(val)<0&&val){ var ex=document.createElement("option"); ex.value=val; ex.textContent=val; sel.appendChild(ex); } sel.value=val; }
+  function loadSettingsForm(){
+    $("setServer").value=settings.server; $("setSteps").value=settings.steps; $("setCfg").value=settings.cfg; $("setShift").value=settings.shift;
+    fillSelect($("setSampler"),SAMPLERS,settings.sampler); fillSelect($("setScheduler"),SCHEDULERS,settings.scheduler);
+    $("setQuality").value=settings.quality; $("setUnet").value=settings.unet; $("setClip").value=settings.clip; $("setClipType").value=settings.clipType; $("setVae").value=settings.vae; $("setPrefix").value=settings.prefix;
+    $("testLine").textContent=""; $("testLine").className="testline";
+  }
+  function saveSettingsForm(){
+    settings.server=$("setServer").value.trim()||DEFAULTS.server;
+    settings.steps=num($("setSteps").value,8); settings.cfg=num($("setCfg").value,1); settings.shift=num($("setShift").value,3);
+    settings.sampler=$("setSampler").value; settings.scheduler=$("setScheduler").value;
+    settings.quality=$("setQuality").value; settings.unet=$("setUnet").value.trim(); settings.clip=$("setClip").value.trim();
+    settings.clipType=$("setClipType").value.trim()||"lumina2"; settings.vae=$("setVae").value.trim(); settings.prefix=$("setPrefix").value.trim()||"z-image-turbo";
+    persistSettings();
+  }
+  $("openSettings").onclick=function(){ loadSettingsForm(); openSheet("settingsSheet"); refreshVram(); };
+  $("btnFree").onclick=freeMemory;
+  $("btnFree2").onclick=freeMemory;
+  $("btnRefreshVram").onclick=refreshVram;
+  $("status").onclick=function(){ if($("status").dataset.state!=="online"){ loadSettingsForm(); openSheet("settingsSheet"); } };
+  ["setServer","setSteps","setCfg","setShift","setSampler","setScheduler","setQuality","setUnet","setClip","setClipType","setVae","setPrefix"].forEach(function(id){
+    $(id).addEventListener("change",function(){ var prev=settings.server; saveSettingsForm(); if(id==="setServer"&&settings.server!==prev){ wsRetry=0; connectWs(); } });
+  });
+  $("btnTest").onclick=async function(){
+    saveSettingsForm(); var line=$("testLine"); line.className="testline warn"; line.textContent="Testing…";
+    try{ var s=await api("/system_stats"); var name="ComfyUI"; try{ if(s&&s.devices&&s.devices[0]) name=s.devices[0].name; }catch(e){} line.className="testline ok"; line.textContent="Connected ✓  "+name; wsRetry=0; connectWs(); refreshVram(); }
+    catch(e){ line.className="testline err"; line.textContent="No response. Check address + --listen --enable-cors-header."; }
+  };
+  $("btnReset").onclick=function(){ Object.assign(settings,DEFAULTS); persistSettings(); loadSettingsForm(); wsRetry=0; connectWs(); toast("Settings reset"); };
+  $("btnClearGallery").onclick=function(){ gallery=[]; LS.set("cs_gallery",gallery); WORKFLOWS.forEach(function(w){ wfStates[w.id].lastResult=null; }); persist(); renderStrip(); clearStage(); refreshComposerForWf(); toast("Results cleared"); };
+  $("btnForget").onclick=function(){ imports={}; LS.set("cs_imports",imports); renderTabs(); refreshComposerForWf(); toast("Imported workflows forgotten"); };
+
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape"){ if($("viewer").classList.contains("open")){ $("viewerVideo").pause(); $("viewer").classList.remove("open"); } else closeSheets(); }});
+  document.addEventListener("visibilitychange",function(){ if(!document.hidden && (!ws||ws.readyState!==1)){ wsRetry=0; connectWs(); }});
+
+  /* ============ init ============ */
+  renderTabs();
+  refreshComposerForWf();
+  connectWs();
+})();
+</script>
+</body>
+</html>
