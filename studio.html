@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Studio">
-<title>ComfyUI Studio</title>
+<title>Swaggle Studio</title>
 <style>
   :root{
     --ink:#0B0D12; --ink-2:#0E1117;
@@ -64,6 +64,11 @@
 
   /* ---------- workflow tabs ---------- */
   .tabsbar{flex:0 0 auto; background:rgba(11,13,18,.92); border-bottom:1px solid var(--line-soft);}
+  .groupbar{flex:0 0 auto; background:rgba(11,13,18,.92); display:flex; justify-content:center; gap:8px; padding:11px 16px 5px;}
+  .grp{appearance:none; -webkit-appearance:none; border:1px solid var(--line); background:transparent; color:var(--muted); font:700 13px/1 var(--ui); padding:9px 20px; border-radius:var(--r-pill); cursor:pointer; letter-spacing:.01em; transition:background .15s,color .15s,border-color .15s; display:flex; align-items:center; gap:7px;}
+  .grp .c{font:700 10px/1 var(--mono); opacity:.65; background:var(--line-soft); padding:2px 6px; border-radius:var(--r-pill);}
+  .grp.active{background:var(--accent); color:var(--accent-ink); border-color:transparent;}
+  .grp.active .c{background:rgba(0,0,0,.22); opacity:.85;}
   .tabs{display:flex; gap:8px; padding:9px 16px; overflow-x:auto; max-width:760px; margin:0 auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;}
   .tabs::-webkit-scrollbar{height:0;}
   .tab{flex:0 0 auto; display:flex; align-items:center; gap:9px; padding:8px 13px 8px 11px; border-radius:14px;
@@ -77,6 +82,9 @@
   .tab .setup{position:absolute;top:-5px;right:-5px;width:15px;height:15px;border-radius:50%;background:var(--warn);
     color:#1a1206;font-size:10px;font-weight:800;display:grid;place-items:center;border:2px solid var(--ink);}
   .tab.ready .setup{display:none;}
+  .wfdesc{max-width:760px; margin:0 auto; padding:0 16px 10px; font-size:12.5px; line-height:1.45; color:var(--muted); display:flex; align-items:flex-start; gap:7px;}
+  .wfdesc .badge{flex:0 0 auto; font-family:var(--mono); font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent-ink); background:var(--accent); padding:2px 7px; border-radius:var(--r-pill); margin-top:1px; font-weight:700;}
+  .wfdesc .ready-badge{background:var(--ok);} .wfdesc .setup-badge{background:var(--warn);}
 
   /* ---------- main scroll ---------- */
   main{flex:1 1 auto; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;}
@@ -277,7 +285,7 @@
 
   <header>
     <div class="bar">
-      <div class="wordmark"><span class="gmark"></span>studio</div>
+      <div class="wordmark"><span class="gmark"></span>Swaggle Studio</div>
       <div class="spacer"></div>
       <button class="status" id="status" data-state="connecting" title="Connection — tap for setup">
         <span class="dot"></span><span id="statusText">connecting</span>
@@ -291,8 +299,13 @@
     </div>
   </header>
 
+  <!-- main groups -->
+  <div class="groupbar" id="groupbar">
+    <button class="grp" data-group="image">Images<span class="c" id="cImage"></span></button>
+    <button class="grp" data-group="video">Video<span class="c" id="cVideo"></span></button>
+  </div>
   <!-- workflow tabs -->
-  <div class="tabsbar"><div class="tabs" id="tabs"></div></div>
+  <div class="tabsbar"><div class="tabs" id="tabs"></div><div class="wfdesc" id="wfDesc"></div></div>
 
   <main>
     <div class="wrap">
@@ -457,6 +470,32 @@
         </div>
       </details>
 
+      <details class="help">
+        <summary>HiDream advanced <span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg></span></summary>
+        <div class="help-body">
+          <p style="margin:2px 0 10px;">If a slot turns red in ComfyUI, the filename here doesn't match a file in your folders — fix the name to match. HiDream needs four text encoders in <code>models/text_encoders</code>.</p>
+          <div class="field" style="margin:6px 0"><label>Diffusion model (unet)</label><input class="input mono" id="setHdUnet" autocapitalize="off" spellcheck="false"></div>
+          <div class="row2">
+            <div class="field" style="margin:6px 0"><label>clip 1 — clip_l</label><input class="input mono" id="setHdClipL" autocapitalize="off" spellcheck="false"></div>
+            <div class="field" style="margin:6px 0"><label>clip 2 — clip_g</label><input class="input mono" id="setHdClipG" autocapitalize="off" spellcheck="false"></div>
+          </div>
+          <div class="row2">
+            <div class="field" style="margin:6px 0"><label>clip 3 — t5xxl</label><input class="input mono" id="setHdT5" autocapitalize="off" spellcheck="false"></div>
+            <div class="field" style="margin:6px 0"><label>clip 4 — llama (swap for uncensored)</label><input class="input mono" id="setHdLlama" autocapitalize="off" spellcheck="false"></div>
+          </div>
+          <div class="row3">
+            <div class="field" style="margin:6px 0"><label>Steps</label><input class="input mono" id="setHdSteps" inputmode="numeric"></div>
+            <div class="field" style="margin:6px 0"><label>CFG</label><input class="input mono" id="setHdCfg" inputmode="decimal"></div>
+            <div class="field" style="margin:6px 0"><label>Shift</label><input class="input mono" id="setHdShift" inputmode="decimal"></div>
+          </div>
+          <div class="row2">
+            <div class="field" style="margin:6px 0"><label>Sampler</label><select class="input" id="setHdSampler"></select></div>
+            <div class="field" style="margin:6px 0"><label>Scheduler</label><select class="input" id="setHdScheduler"></select></div>
+          </div>
+          <p style="margin:8px 0 0; color:var(--muted-2);">Full model: cfg ~5, steps ~30–50, shift 3. If images look over-cooked, it's a distilled build — set cfg 1.0 and steps ~28.</p>
+        </div>
+      </details>
+
       <div class="divider"><span class="eyebrow">Server &amp; memory</span><span class="ln"></span></div>
       <div class="inline" style="gap:10px; flex-wrap:wrap;">
         <button class="btn primary" id="btnFree2">Free GPU memory</button>
@@ -515,11 +554,12 @@
   var enc = encodeURIComponent;
 
   /* ============ prompt defaults (from the screenshots) ============ */
-  var P_ANIMA = "Anime monochrome cyberpunk front portrait, male figure, sleek skin with delicate mechanical lines, piercing glowing eyes, partial exposed metallic mecha components and light cables, sharp domineering cool style, textured anime brushwork, faint circuit background, high contrast chiaroscuro lighting, immersive cinematic shadows, ultra fine details, 8K high-def render, futuristic dystopian mood";
-  var P_ICLORA = "A slow forward dolly shot on a bright, sunlit day in a lush jungle ruin. A lone figure in nature-themed armor stands before a weathered stone arch overgrown with ivy. A textured marble sphere wrapped in twisting vines levitates in the arch's center, spinning slowly. As the camera glides forward, vines sway softly, leaves flutter in the light breeze. Strong golden sunlight streams through the canopy, illuminating the mossy ruins with bright, clear light. The scene feels vibrant and peaceful, with subtle natural motion.";
-  var P_IDLORA = "[VISUAL]: Opens with a medium shot, camera slowly pushes in toward the character. A man with short dark hair and round glasses, wearing a retro orange floral shirt, looks directly at the camera, his mouth opens and closes naturally as he speaks, tilts his head playfully.\n[SPEECH]: Hey, what do you think of this vibe? Feels like we're back in the 90s.\n[SOUNDS]: Playful and upbeat tone, moderate volume, close to the microphone.";
-  var P_ERNIE = "A stylized cinematic side-profile medium shot portrait of a young European woman with sleek dark hair in a tight low bun, wearing a crisp white ruffled-collar shirt, eyes closed in serene contemplation, standing against a moody, dark gradient deep indigo-blue twilight sky with layered misty mountain silhouettes in the background, extreme high-contrast split neon lighting: 95% of the scene bathed in deep, saturated cool cyan-blue ambient light (dim, moody, low-key), with a sharp, intense, vivid neon pink-orange rim light tracing her facial profile, neck, and collar, creating bold color blocking and a surreal, artistic aesthetic, minimalist composition, high-fashion editorial, 8K, ultra-sharp focus on subject, moody desaturated blue tones, dramatic contrast, atmospheric depth, tranquil introspective vibe, dark atmospheric background, no overexposure, stylized color grading, neon rim light glow, low-key cool fill light.";
-  var P_HIDREAM = "Transform the background into a rainy neon city street at night, with wet asphalt reflections, blurred neon signs";
+  var P_HIDREAM = "a cinematic portrait of a woman in a neon-lit alley at night, photorealistic, sharp focus, detailed skin texture, 85mm, shallow depth of field, moody rim light";
+  var P_QWEN = "A cozy bookshop storefront at dusk, warm window glow, a hand-painted sign reading \"OPEN LATE\", rain-slicked cobblestones, cinematic, ultra detailed, crisp legible text";
+  var P_QWENEDIT = "Change the background to a sunny tropical beach at golden hour, keep the subject unchanged";
+  var P_WAN = "A cinematic aerial shot flying low over snow-capped mountains at sunrise, slow sweeping camera motion, volumetric light, drifting clouds";
+  var P_LTX = "Close-up of a steaming cup of coffee on a wooden table by a window, soft morning light, gentle steam rising, subtle slow camera push-in";
+  var P_LTXIA2V = "The person looks into the camera and speaks naturally, relaxed expression, gentle head movement, soft studio lighting";
 
   /* ============ defaults & registry ============ */
   var DEFAULTS = {
@@ -531,7 +571,14 @@
     clipType: "lumina2",
     vae: "ae.safetensors",
     prefix: "z-image-turbo",
-    quality: "Technical Specifications: Photorealistic rendering, extremely detailed textures (fabric, skin, plastic, metal), complex composition, cinematic depth of field, high-resolution textures."
+    quality: "Technical Specifications: Photorealistic rendering, extremely detailed textures (fabric, skin, plastic, metal), complex composition, cinematic depth of field, high-resolution textures.",
+    // HiDream (built-in graph)
+    hdUnet: "hidream_i1_full_uncensored_fp8_v0.2.safetensors",
+    hdClipL: "clip_l_hidream.safetensors",
+    hdClipG: "clip_g_hidream.safetensors",
+    hdT5: "t5xxl_fp8_e4m3fn_scaled.safetensors",
+    hdLlama: "llama_3.1_8b_instruct_fp8_scaled.safetensors",
+    hdShift: 3.0, hdSteps: 30, hdCfg: 5.0, hdSampler: "euler", hdScheduler: "normal", hdPrefix: "HiDream"
   };
   var SAMPLERS = ["res_multistep","euler","euler_ancestral","dpmpp_2m","dpmpp_2m_sde","dpmpp_3m_sde","dpmpp_sde","heun","ddim","uni_pc","lcm"];
   var SCHEDULERS = ["simple","normal","karras","sgm_uniform","beta","exponential","ddim_uniform"];
@@ -552,10 +599,22 @@
 
   // Each workflow: id, label, type sub, kind, gradient/accent, fields, optional builtin builder,
   // optional inputs config for the inputs sheet, and per-field defaults.
+  /* ===== baked-in API graphs (from the user's ComfyUI 'Export (API)') ===== */
+  var G_QWEN = {"60":{"inputs":{"filename_prefix":"Qwen-Image-2512","images":["238:231",0]},"class_type":"SaveImage","_meta":{"title":"Save Image"}},"266":{"inputs":{"value":"equirectangular 360 image, "},"class_type":"PrimitiveStringMultiline","_meta":{"title":"String (Trigger Word)"}},"267":{"inputs":{"string_a":["266",0],"string_b":["269",0],"delimiter":""},"class_type":"StringConcatenate","_meta":{"title":"Concatenate Text"}},"269":{"inputs":{"value":"A spacious warm living room, soft sunlight through window, soft sofa, delicate decor, green potted plants, clean tidy space, gentle ambient light"},"class_type":"PrimitiveStringMultiline","_meta":{"title":"String (Prompt)"}},"238:219":{"inputs":{"clip_name":"qwen_2.5_vl_7b_fp8_scaled.safetensors","type":"qwen_image","device":"default"},"class_type":"CLIPLoader","_meta":{"title":"Load CLIP"}},"238:220":{"inputs":{"vae_name":"qwen_image_vae.safetensors"},"class_type":"VAELoader","_meta":{"title":"Load VAE"}},"238:222":{"inputs":{"shift":3.1000000000000005,"model":["238:233",0]},"class_type":"ModelSamplingAuraFlow","_meta":{"title":"ModelSamplingAuraFlow"}},"238:226":{"inputs":{"unet_name":"qwen_image_2512_fp8_e4m3fn.safetensors","weight_dtype":"default"},"class_type":"UNETLoader","_meta":{"title":"Load Diffusion Model"}},"238:227":{"inputs":{"text":["267",0],"clip":["238:219",0]},"class_type":"CLIPTextEncode","_meta":{"title":"CLIP Text Encode (Positive Prompt)"}},"238:228":{"inputs":{"text":"低分辨率，低画质，肢体畸形，手指畸形，画面过饱和，蜡像感，人脸无细节，过度光滑，画面具有AI感。构图混乱。文字模糊，扭曲","clip":["238:219",0]},"class_type":"CLIPTextEncode","_meta":{"title":"CLIP Text Encode (Negative Prompt)"}},"238:231":{"inputs":{"samples":["238:230",0],"vae":["238:220",0]},"class_type":"VAEDecode","_meta":{"title":"VAE Decode"}},"238:232":{"inputs":{"width":2048,"height":1024,"batch_size":1},"class_type":"EmptySD3LatentImage","_meta":{"title":"EmptySD3LatentImage"}},"238:230":{"inputs":{"seed":662848447520565,"steps":["238:240",0],"cfg":["238:243",0],"sampler_name":"euler","scheduler":"simple","denoise":1,"model":["238:222",0],"positive":["238:227",0],"negative":["238:228",0],"latent_image":["238:232",0]},"class_type":"KSampler","_meta":{"title":"KSampler"}},"238:224":{"inputs":{"value":50},"class_type":"PrimitiveInt","_meta":{"title":"Int (Steps)"}},"238:223":{"inputs":{"value":4},"class_type":"PrimitiveFloat","_meta":{"title":"Float (CFG)"}},"238:229":{"inputs":{"value":false},"class_type":"PrimitiveBoolean","_meta":{"title":"Enable 4 Steps LoRA?"}},"238:225":{"inputs":{"value":4},"class_type":"PrimitiveInt","_meta":{"title":"Int (Steps)"}},"238:218":{"inputs":{"value":1},"class_type":"PrimitiveFloat","_meta":{"title":"Float (CFG)"}},"238:221":{"inputs":{"lora_name":"Qwen-Image-2512-Lightning-4steps-V1.0-fp32.safetensors","strength_model":1,"model":["238:264",0]},"class_type":"LoraLoaderModelOnly","_meta":{"title":"Load LoRA"}},"238:233":{"inputs":{"switch":["238:229",0],"on_false":["238:264",0],"on_true":["238:221",0]},"class_type":"ComfySwitchNode","_meta":{"title":"Switch (model)"}},"238:240":{"inputs":{"switch":["238:229",0],"on_false":["238:224",0],"on_true":["238:225",0]},"class_type":"ComfySwitchNode","_meta":{"title":"Switch (steps)"}},"238:243":{"inputs":{"switch":["238:229",0],"on_false":["238:223",0],"on_true":["238:218",0]},"class_type":"ComfySwitchNode","_meta":{"title":"Switch (cfg)"}},"238:264":{"inputs":{"lora_name":"qwen-360-diffusion-2512-int8-bf16-v2.safetensors","strength_model":1,"model":["238:226",0]},"class_type":"LoraLoaderModelOnly","_meta":{"title":"Load LoRA"}}};
+  var G_QWENEDIT = {"9":{"inputs":{"filename_prefix":"Qwen_Edit_2511_systms_action","images":["170:158",0]},"class_type":"SaveImage","_meta":{"title":"Save Image"}},"223":{"inputs":{"image":"western_rider.png"},"class_type":"LoadImage","_meta":{"title":"Load Image"}},"170:145":{"inputs":{"shift":3.1,"model":["170:222",0]},"class_type":"ModelSamplingAuraFlow","_meta":{"title":"ModelSamplingAuraFlow"}},"170:146":{"inputs":{"vae_name":"qwen_image_vae.safetensors"},"class_type":"VAELoader","_meta":{"title":"Load VAE"}},"170:147":{"inputs":{"reference_latents_method":"index_timestep_zero","conditioning":["170:149",0]},"class_type":"FluxKontextMultiReferenceLatentMethod","_meta":{"title":"Edit Model Reference Method"}},"170:148":{"inputs":{"reference_latents_method":"index_timestep_zero","conditioning":["170:151",0]},"class_type":"FluxKontextMultiReferenceLatentMethod","_meta":{"title":"Edit Model Reference Method"}},"170:149":{"inputs":{"prompt":"","clip":["170:162",0],"vae":["170:146",0],"image1":["170:160",0]},"class_type":"TextEncodeQwenImageEditPlus","_meta":{"title":"TextEncodeQwenImageEditPlus"}},"170:151":{"inputs":{"prompt":"action the scene","clip":["170:162",0],"vae":["170:146",0],"image1":["170:160",0]},"class_type":"TextEncodeQwenImageEditPlus","_meta":{"title":"TextEncodeQwenImageEditPlus (Positive)"}},"170:152":{"inputs":{"strength":1,"pre_cfg":false,"model":["170:145",0]},"class_type":"CFGNorm","_meta":{"title":"CFGNorm"}},"170:153":{"inputs":{"lora_name":"Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors","strength_model":1,"model":["170:152",0]},"class_type":"LoraLoaderModelOnly","_meta":{"title":"Load LoRA"}},"170:154":{"inputs":{"value":4},"class_type":"PrimitiveFloat","_meta":{"title":"CFG"}},"170:155":{"inputs":{"value":1},"class_type":"PrimitiveFloat","_meta":{"title":"CFG"}},"170:156":{"inputs":{"pixels":["170:160",0],"vae":["170:146",0]},"class_type":"VAEEncode","_meta":{"title":"VAE Encode"}},"170:161":{"inputs":{"unet_name":"qwen_image_edit_2511_bf16.safetensors","weight_dtype":"default"},"class_type":"UNETLoader","_meta":{"title":"Load Diffusion Model"}},"170:162":{"inputs":{"clip_name":"qwen_2.5_vl_7b_fp8_scaled.safetensors","type":"qwen_image","device":"default"},"class_type":"CLIPLoader","_meta":{"title":"Load CLIP"}},"170:163":{"inputs":{"switch":["170:168",0],"on_false":["170:152",0],"on_true":["170:153",0]},"class_type":"ComfySwitchNode","_meta":{"title":"Switch (Model)"}},"170:165":{"inputs":{"value":4},"class_type":"PrimitiveInt","_meta":{"title":"Steps"}},"170:166":{"inputs":{"value":40},"class_type":"PrimitiveInt","_meta":{"title":"Steps"}},"170:168":{"inputs":{"value":true},"class_type":"PrimitiveBoolean","_meta":{"title":"Enable 4steps LoRA?"}},"170:164":{"inputs":{"switch":["170:168",0],"on_false":["170:154",0],"on_true":["170:155",0]},"class_type":"ComfySwitchNode","_meta":{"title":"Switch (CFG)"}},"170:167":{"inputs":{"switch":["170:168",0],"on_false":["170:166",0],"on_true":["170:165",0]},"class_type":"ComfySwitchNode","_meta":{"title":"Switch (Steps)"}},"170:169":{"inputs":{"seed":314630365089879,"steps":["170:167",0],"cfg":["170:164",0],"sampler_name":"euler","scheduler":"simple","denoise":1,"model":["170:163",0],"positive":["170:148",0],"negative":["170:147",0],"latent_image":["170:156",0]},"class_type":"KSampler","_meta":{"title":"KSampler"}},"170:158":{"inputs":{"samples":["170:169",0],"vae":["170:146",0]},"class_type":"VAEDecode","_meta":{"title":"VAE Decode"}},"170:160":{"inputs":{"image":["223",0]},"class_type":"FluxKontextImageScale","_meta":{"title":"FluxKontextImageScale"}},"170:222":{"inputs":{"lora_name":"QWEN_EDIT_ACTION_V1.safetensors","strength_model":1,"model":["170:161",0]},"class_type":"LoraLoaderModelOnly","_meta":{"title":"Load LoRA"}}};
+  var G_LTXT2V = {"75":{"inputs":{"filename_prefix":"video/LTX_2.3_t2v","format":"auto","codec":"auto","video":["267:242",0]},"class_type":"SaveVideo","_meta":{"title":"Save Video"}},"267:216":{"inputs":{"noise_seed":42},"class_type":"RandomNoise","_meta":{"title":"RandomNoise"}},"267:237":{"inputs":{"noise_seed":810138461690240},"class_type":"RandomNoise","_meta":{"title":"RandomNoise"}},"267:229":{"inputs":{"video_latent":["267:230",0],"audio_latent":["267:217",1]},"class_type":"LTXVConcatAVLatent","_meta":{"title":"LTXVConcatAVLatent"}},"267:221":{"inputs":{"ckpt_name":"ltx-2.3-22b-dev-fp8.safetensors"},"class_type":"LTXVAudioVAELoader","_meta":{"title":"Load LTXV Audio VAE"}},"267:246":{"inputs":{"sampler_name":"euler"},"class_type":"KSamplerSelect","_meta":{"title":"KSamplerSelect"}},"267:211":{"inputs":{"sigmas":"0.85, 0.7250, 0.4219, 0.0"},"class_type":"ManualSigmas","_meta":{"title":"ManualSigmas"}},"267:213":{"inputs":{"cfg":1,"model":["267:232",0],"positive":["267:212",0],"negative":["267:212",1]},"class_type":"CFGGuider","_meta":{"title":"CFG Guider"}},"267:215":{"inputs":{"noise":["267:237",0],"guider":["267:231",0],"sampler":["267:209",0],"sigmas":["267:252",0],"latent_image":["267:222",0]},"class_type":"SamplerCustomAdvanced","_meta":{"title":"SamplerCustomAdvanced"}},"267:212":{"inputs":{"positive":["267:239",0],"negative":["267:239",1],"latent":["267:217",0]},"class_type":"LTXVCropGuides","_meta":{"title":"LTXVCropGuides"}},"267:232":{"inputs":{"lora_name":"ltx_2.3_22b_distilled_1.1_lora_dynamic_fro09_avg_rank_111_bf16.safetensors","strength_model":0.5,"model":["267:236",0]},"class_type":"LoraLoaderModelOnly","_meta":{"title":"Load LoRA"}},"267:235":{"inputs":{"longer_edge":1536,"images":["267:238",0]},"class_type":"ResizeImagesByLongerEdge","_meta":{"title":"Resize Images by Longer Edge (DEPRECATED)"}},"267:253":{"inputs":{"samples":["267:217",0],"upscale_model":["267:233",0],"vae":["267:236",2]},"class_type":"LTXVLatentUpsampler","_meta":{"title":"LTXVLatentUpsampler"}},"267:230":{"inputs":{"strength":1,"bypass":["267:201",0],"vae":["267:236",2],"image":["267:248",0],"latent":["267:253",0]},"class_type":"LTXVImgToVideoInplace","_meta":{"title":"LTXVImgToVideoInplace"}},"267:248":{"inputs":{"img_compression":18,"image":["267:235",0]},"class_type":"LTXVPreprocess","_meta":{"title":"LTXV Preprocess"}},"267:238":{"inputs":{"resize_type":"scale dimensions","resize_type.width":["267:257",0],"resize_type.height":["267:258",0],"resize_type.crop":"center","scale_method":"lanczos","input":["267:325",0]},"class_type":"ResizeImageMaskNode","_meta":{"title":"Resize Image/Mask"}},"267:209":{"inputs":{"sampler_name":"euler"},"class_type":"KSamplerSelect","_meta":{"title":"KSamplerSelect"}},"267:256":{"inputs":{"expression":"a/2","values.a":["267:257",0]},"class_type":"ComfyMathExpression","_meta":{"title":"Math Expression"}},"267:259":{"inputs":{"expression":"a/2","values.a":["267:258",0]},"class_type":"ComfyMathExpression","_meta":{"title":"Math Expression"}},"267:228":{"inputs":{"width":["267:256",1],"height":["267:259",1],"length":["267:277",1],"batch_size":1},"class_type":"EmptyLTXVLatentVideo","_meta":{"title":"EmptyLTXVLatentVideo"}},"267:249":{"inputs":{"strength":0.7,"bypass":["267:201",0],"vae":["267:236",2],"image":["267:248",0],"latent":["267:228",0]},"class_type":"LTXVImgToVideoInplace","_meta":{"title":"LTXVImgToVideoInplace"}},"267:220":{"inputs":{"samples":["267:218",1],"audio_vae":["267:221",0]},"class_type":"LTXVAudioVAEDecode","_meta":{"title":"LTXV Audio VAE Decode"}},"267:261":{"inputs":{"expression":"a","values.a":["267:260",0]},"class_type":"ComfyMathExpression","_meta":{"title":"Math Expression (fps)"}},"267:258":{"inputs":{"value":720},"class_type":"PrimitiveInt","_meta":{"title":"Height"}},"267:260":{"inputs":{"value":25},"class_type":"PrimitiveInt","_meta":{"title":"Frame Rate"}},"267:225":{"inputs":{"value":5},"class_type":"PrimitiveInt","_meta":{"title":"Duration"}},"267:201":{"inputs":{"value":true},"class_type":"PrimitiveBoolean","_meta":{"title":"Switch to Text to Video?"}},"267:240":{"inputs":{"text":["267:329",0],"clip":["267:243",0]},"class_type":"CLIPTextEncode","_meta":{"title":"CLIP Text Encode (Prompt)"}},"267:239":{"inputs":{"frame_rate":["267:261",0],"positive":["267:240",0],"negative":["267:247",0]},"class_type":"LTXVConditioning","_meta":{"title":"LTXVConditioning"}},"267:214":{"inputs":{"frames_number":["267:277",1],"frame_rate":["267:261",1],"batch_size":1,"audio_vae":["267:221",0]},"class_type":"LTXVEmptyLatentAudio","_meta":{"title":"LTXV Empty Latent Audio"}},"267:252":{"inputs":{"sigmas":"1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"},"class_type":"ManualSigmas","_meta":{"title":"ManualSigmas"}},"267:217":{"inputs":{"av_latent":["267:215",0]},"class_type":"LTXVSeparateAVLatent","_meta":{"title":"LTXVSeparateAVLatent"}},"267:219":{"inputs":{"noise":["267:216",0],"guider":["267:213",0],"sampler":["267:246",0],"sigmas":["267:211",0],"latent_image":["267:229",0]},"class_type":"SamplerCustomAdvanced","_meta":{"title":"SamplerCustomAdvanced"}},"267:218":{"inputs":{"av_latent":["267:219",0]},"class_type":"LTXVSeparateAVLatent","_meta":{"title":"LTXVSeparateAVLatent"}},"267:242":{"inputs":{"fps":["267:261",0],"bit_depth":8,"images":["267:251",0],"audio":["267:220",0]},"class_type":"CreateVideo","_meta":{"title":"Create Video"}},"267:233":{"inputs":{"model_name":"ltx-2.3-spatial-upscaler-x2-1.1.safetensors"},"class_type":"LatentUpscaleModelLoader","_meta":{"title":"Load Latent Upscale Model"}},"267:257":{"inputs":{"value":1280},"class_type":"PrimitiveInt","_meta":{"title":"Width"}},"267:247":{"inputs":{"text":"pc game, console game, video game, cartoon, childish, ugly","clip":["267:243",0]},"class_type":"CLIPTextEncode","_meta":{"title":"CLIP Text Encode (Prompt)"}},"267:231":{"inputs":{"cfg":1,"model":["267:232",0],"positive":["267:239",0],"negative":["267:239",1]},"class_type":"CFGGuider","_meta":{"title":"CFG Guider"}},"267:251":{"inputs":{"tile_size":768,"overlap":64,"temporal_size":4096,"temporal_overlap":4,"samples":["267:218",0],"vae":["267:236",2]},"class_type":"VAEDecodeTiled","_meta":{"title":"VAE Decode (Tiled)"}},"267:236":{"inputs":{"ckpt_name":"ltx-2.3-22b-dev-fp8.safetensors"},"class_type":"CheckpointLoaderSimple","_meta":{"title":"Load Checkpoint"}},"267:243":{"inputs":{"text_encoder":"gemma_3_12B_it_fp4_mixed.safetensors","ckpt_name":"ltx-2.3-22b-dev-fp8.safetensors","device":"default"},"class_type":"LTXAVTextEncoderLoader","_meta":{"title":"LTXV Audio Text Encoder Loader"}},"267:266":{"inputs":{"value":"Dynamic cinematic close-up of high-tech modular machinery self-assembling in midair, precision robotic parts, magnetic connectors, and glowing circuits clicking together, subtle smoke and light flares, extremely detailed titanium textures. The final product displays a clean, clear surface with large glowing engraved text “LTX-2.3” centered and unobstructed, dramatic lighting, photorealism, 8K, sharp focus.\n"},"class_type":"PrimitiveStringMultiline","_meta":{"title":"Prompt"}},"267:222":{"inputs":{"video_latent":["267:249",0],"audio_latent":["267:214",0]},"class_type":"LTXVConcatAVLatent","_meta":{"title":"LTXVConcatAVLatent"}},"267:277":{"inputs":{"expression":"a * b + 1","values.a":["267:225",0],"values.b":["267:260",0]},"class_type":"ComfyMathExpression","_meta":{"title":"Math Expression (length)"}},"267:325":{"inputs":{"width":512,"height":512,"batch_size":1,"color":0},"class_type":"EmptyImage","_meta":{"title":"Empty Image"}},"267:326":{"inputs":{"lora_name":"gemma-3-12b-it-abliterated_lora_rank64_bf16.safetensors","strength_model":1,"strength_clip":1,"model":["267:232",0],"clip":["267:243",0]},"class_type":"LoraLoader","_meta":{"title":"Load LoRA (Model and CLIP)"}},"267:327":{"inputs":{"prompt":["267:266",0],"max_length":2048,"sampling_mode":"on","sampling_mode.temperature":0.7,"sampling_mode.top_k":64,"sampling_mode.top_p":0.95,"sampling_mode.min_p":0.05,"sampling_mode.repetition_penalty":1.05,"sampling_mode.seed":0,"sampling_mode.presence_penalty":0,"thinking":false,"use_default_template":true,"clip":["267:326",1]},"class_type":"TextGenerateLTX2Prompt","_meta":{"title":"Generate LTX2 Prompt"}},"267:328":{"inputs":{"source":["267:329",0]},"class_type":"PreviewAny","_meta":{"title":"Preview as Text"}},"267:329":{"inputs":{"switch":["267:330",0],"on_false":["267:266",0],"on_true":["267:327",0]},"class_type":"ComfySwitchNode","_meta":{"title":"Switch"}},"267:330":{"inputs":{"value":true},"class_type":"PrimitiveBoolean","_meta":{"title":"Boolean (Enable Prompt Enhance)"}}};
+  var G_LTXI2V = {"75":{"inputs":{"filename_prefix":"video/LTX_2.3_i2v","format":"auto","codec":"auto","video-preview":"","video":["320:310",0]},"class_type":"SaveVideo","_meta":{"title":"Save Video"}},"269":{"inputs":{"image":"z-image-turbo_00131_.png"},"class_type":"LoadImage","_meta":{"title":"Load Image"}},"320:276":{"inputs":{"noise_seed":42},"class_type":"RandomNoise","_meta":{"title":"RandomNoise"}},"320:277":{"inputs":{"noise_seed":922711473469189},"class_type":"RandomNoise","_meta":{"title":"RandomNoise"}},"320:278":{"inputs":{"video_latent":["320:288",0],"audio_latent":["320:307",1]},"class_type":"LTXVConcatAVLatent","_meta":{"title":"LTXVConcatAVLatent"}},"320:279":{"inputs":{"ckpt_name":"ltx-2.3-22b-dev-fp8.safetensors"},"class_type":"LTXVAudioVAELoader","_meta":{"title":"Load LTXV Audio VAE"}},"320:280":{"inputs":{"sampler_name":"euler"},"class_type":"KSamplerSelect","_meta":{"title":"KSamplerSelect"}},"320:281":{"inputs":{"sigmas":"0.85, 0.7250, 0.4219, 0.0"},"class_type":"ManualSigmas","_meta":{"title":"ManualSigmas"}},"320:282":{"inputs":{"cfg":1,"model":["320:285",0],"positive":["320:284",0],"negative":["320:284",1]},"class_type":"CFGGuider","_meta":{"title":"CFG Guider"}},"320:283":{"inputs":{"noise":["320:277",0],"guider":["320:314",0],"sampler":["320:291",0],"sigmas":["320:306",0],"latent_image":["320:318",0]},"class_type":"SamplerCustomAdvanced","_meta":{"title":"SamplerCustomAdvanced"}},"320:284":{"inputs":{"positive":["320:304",0],"negative":["320:304",1],"latent":["320:307",0]},"class_type":"LTXVCropGuides","_meta":{"title":"LTXVCropGuides"}},"320:285":{"inputs":{"lora_name":"ltx_2.3_22b_distilled_1.1_lora_dynamic_fro09_avg_rank_111_bf16.safetensors","strength_model":0.5,"model":["320:316",0]},"class_type":"LoraLoaderModelOnly","_meta":{"title":"Load LoRA"}},"320:286":{"inputs":{"longer_edge":1536,"images":["320:290",0]},"class_type":"ResizeImagesByLongerEdge","_meta":{"title":"Resize Images by Longer Edge (DEPRECATED)"}},"320:287":{"inputs":{"samples":["320:307",0],"upscale_model":["320:311",0],"vae":["320:316",2]},"class_type":"LTXVLatentUpsampler","_meta":{"title":"LTXVLatentUpsampler"}},"320:288":{"inputs":{"strength":1,"bypass":["320:302",0],"vae":["320:316",2],"image":["320:289",0],"latent":["320:287",0]},"class_type":"LTXVImgToVideoInplace","_meta":{"title":"LTXVImgToVideoInplace"}},"320:289":{"inputs":{"img_compression":18,"image":["320:286",0]},"class_type":"LTXVPreprocess","_meta":{"title":"LTXV Preprocess"}},"320:290":{"inputs":{"resize_type":"scale dimensions","resize_type.width":["320:312",0],"resize_type.height":["320:299",0],"resize_type.crop":"center","scale_method":"lanczos","input":["269",0]},"class_type":"ResizeImageMaskNode","_meta":{"title":"Resize Image/Mask"}},"320:291":{"inputs":{"sampler_name":"euler"},"class_type":"KSamplerSelect","_meta":{"title":"KSamplerSelect"}},"320:292":{"inputs":{"expression":"a/2","values.a":["320:312",0]},"class_type":"ComfyMathExpression","_meta":{"title":"Math Expression"}},"320:294":{"inputs":{"expression":"a/2","values.a":["320:299",0]},"class_type":"ComfyMathExpression","_meta":{"title":"Math Expression"}},"320:295":{"inputs":{"width":["320:292",1],"height":["320:294",1],"length":["320:323",1],"batch_size":1},"class_type":"EmptyLTXVLatentVideo","_meta":{"title":"EmptyLTXVLatentVideo"}},"320:296":{"inputs":{"strength":0.7,"bypass":["320:302",0],"vae":["320:316",2],"image":["320:289",0],"latent":["320:295",0]},"class_type":"LTXVImgToVideoInplace","_meta":{"title":"LTXVImgToVideoInplace"}},"320:297":{"inputs":{"samples":["320:309",1],"audio_vae":["320:279",0]},"class_type":"LTXVAudioVAEDecode","_meta":{"title":"LTXV Audio VAE Decode"}},"320:298":{"inputs":{"expression":"a","values.a":["320:300",0]},"class_type":"ComfyMathExpression","_meta":{"title":"Math Expression"}},"320:299":{"inputs":{"value":720},"class_type":"PrimitiveInt","_meta":{"title":"Height"}},"320:300":{"inputs":{"value":25},"class_type":"PrimitiveInt","_meta":{"title":"Frame Rate"}},"320:301":{"inputs":{"value":5},"class_type":"PrimitiveInt","_meta":{"title":"Duration"}},"320:302":{"inputs":{"value":false},"class_type":"PrimitiveBoolean","_meta":{"title":"Switch to Text to Video?"}},"320:303":{"inputs":{"text":["320:327",0],"clip":["320:317",0]},"class_type":"CLIPTextEncode","_meta":{"title":"CLIP Text Encode (Prompt)"}},"320:304":{"inputs":{"frame_rate":["320:298",0],"positive":["320:303",0],"negative":["320:313",0]},"class_type":"LTXVConditioning","_meta":{"title":"LTXVConditioning"}},"320:305":{"inputs":{"frames_number":["320:323",1],"frame_rate":["320:298",1],"batch_size":1,"audio_vae":["320:279",0]},"class_type":"LTXVEmptyLatentAudio","_meta":{"title":"LTXV Empty Latent Audio"}},"320:306":{"inputs":{"sigmas":"1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"},"class_type":"ManualSigmas","_meta":{"title":"ManualSigmas"}},"320:307":{"inputs":{"av_latent":["320:283",0]},"class_type":"LTXVSeparateAVLatent","_meta":{"title":"LTXVSeparateAVLatent"}},"320:308":{"inputs":{"noise":["320:276",0],"guider":["320:282",0],"sampler":["320:280",0],"sigmas":["320:281",0],"latent_image":["320:278",0]},"class_type":"SamplerCustomAdvanced","_meta":{"title":"SamplerCustomAdvanced"}},"320:309":{"inputs":{"av_latent":["320:308",0]},"class_type":"LTXVSeparateAVLatent","_meta":{"title":"LTXVSeparateAVLatent"}},"320:310":{"inputs":{"fps":["320:298",0],"bit_depth":8,"images":["320:315",0],"audio":["320:297",0]},"class_type":"CreateVideo","_meta":{"title":"Create Video"}},"320:311":{"inputs":{"model_name":"ltx-2.3-spatial-upscaler-x2-1.1.safetensors"},"class_type":"LatentUpscaleModelLoader","_meta":{"title":"Load Latent Upscale Model"}},"320:312":{"inputs":{"value":1280},"class_type":"PrimitiveInt","_meta":{"title":"Width"}},"320:313":{"inputs":{"text":"pc game, console game, video game, cartoon, childish, ugly","clip":["320:317",0]},"class_type":"CLIPTextEncode","_meta":{"title":"CLIP Text Encode (Prompt)"}},"320:314":{"inputs":{"cfg":1,"model":["320:285",0],"positive":["320:304",0],"negative":["320:304",1]},"class_type":"CFGGuider","_meta":{"title":"CFG Guider"}},"320:315":{"inputs":{"tile_size":768,"overlap":64,"temporal_size":4096,"temporal_overlap":4,"samples":["320:309",0],"vae":["320:316",2]},"class_type":"VAEDecodeTiled","_meta":{"title":"VAE Decode (Tiled)"}},"320:316":{"inputs":{"ckpt_name":"ltx-2.3-22b-dev-fp8.safetensors"},"class_type":"CheckpointLoaderSimple","_meta":{"title":"Load Checkpoint"}},"320:317":{"inputs":{"text_encoder":"gemma_3_12B_it_fp4_mixed.safetensors","ckpt_name":"ltx-2.3-22b-dev-fp8.safetensors","device":"default"},"class_type":"LTXAVTextEncoderLoader","_meta":{"title":"LTXV Audio Text Encoder Loader"}},"320:318":{"inputs":{"video_latent":["320:296",0],"audio_latent":["320:305",0]},"class_type":"LTXVConcatAVLatent","_meta":{"title":"LTXVConcatAVLatent"}},"320:319":{"inputs":{"value":"Make this scene come alive"},"class_type":"PrimitiveStringMultiline","_meta":{"title":"Prompt"}},"320:323":{"inputs":{"expression":"a * b + 1","values.a":["320:301",0],"values.b":["320:300",0]},"class_type":"ComfyMathExpression","_meta":{"title":"Math Expression (length)"}},"320:324":{"inputs":{"lora_name":"gemma-3-12b-it-abliterated_lora_rank64_bf16.safetensors","strength_model":1,"strength_clip":1,"model":["320:285",0],"clip":["320:317",0]},"class_type":"LoraLoader","_meta":{"title":"Load LoRA (Model and CLIP)"}},"320:325":{"inputs":{"prompt":["320:319",0],"max_length":2048,"sampling_mode":"on","sampling_mode.temperature":0.7,"sampling_mode.top_k":64,"sampling_mode.top_p":0.95,"sampling_mode.min_p":0.05,"sampling_mode.repetition_penalty":1.05,"sampling_mode.seed":0,"sampling_mode.presence_penalty":0,"thinking":false,"use_default_template":true,"clip":["320:324",1]},"class_type":"TextGenerateLTX2Prompt","_meta":{"title":"Generate LTX2 Prompt"}},"320:326":{"inputs":{"source":["320:327",0]},"class_type":"PreviewAny","_meta":{"title":"Preview as Text"}},"320:327":{"inputs":{"switch":["320:328",0],"on_false":["320:319",0],"on_true":["320:325",0]},"class_type":"ComfySwitchNode","_meta":{"title":"Switch"}},"320:328":{"inputs":{"value":true},"class_type":"PrimitiveBoolean","_meta":{"title":"Boolean (Enable Prompt Enhance)"}}};
+  var G_LTXFLF2V = {"31":{"inputs":{"image":"high_view_classic_car.png"},"class_type":"LoadImage","_meta":{"title":"Load First Frame"}},"39":{"inputs":{"image":"low_view_classic_car.png"},"class_type":"LoadImage","_meta":{"title":"Load Last Frame"}},"68":{"inputs":{"filename_prefix":"video/ltx2.3_flf2v","format":"auto","codec":"auto","video":["129:122",0]},"class_type":"SaveVideo","_meta":{"title":"Save Video"}},"129:99":{"inputs":{"img_compression":25,"image":["129:125",0]},"class_type":"LTXVPreprocess","_meta":{"title":"LTXV Preprocess"}},"129:100":{"inputs":{"noise_seed":315253765879496},"class_type":"RandomNoise","_meta":{"title":"RandomNoise"}},"129:101":{"inputs":{"frames_number":["129:130",1],"frame_rate":["129:114",0],"batch_size":1,"audio_vae":["129:126",0]},"class_type":"LTXVEmptyLatentAudio","_meta":{"title":"LTXV Empty Latent Audio"}},"129:102":{"inputs":{"value":5},"class_type":"PrimitiveInt","_meta":{"title":"Duration"}},"129:104":{"inputs":{"img_compression":25,"image":["129:124",0]},"class_type":"LTXVPreprocess","_meta":{"title":"LTXV Preprocess"}},"129:106":{"inputs":{"positive":["129:111",0],"negative":["129:111",1],"latent":["129:121",0]},"class_type":"LTXVCropGuides","_meta":{"title":"LTXVCropGuides"}},"129:108":{"inputs":{"width":["129:110",0],"height":["129:110",1],"length":["129:130",1],"batch_size":1},"class_type":"EmptyLTXVLatentVideo","_meta":{"title":"EmptyLTXVLatentVideo"}},"129:109":{"inputs":{"frame_rate":["129:123",0],"positive":["129:128",0],"negative":["129:112",0]},"class_type":"LTXVConditioning","_meta":{"title":"LTXVConditioning"}},"129:110":{"inputs":{"image":["129:124",0]},"class_type":"GetImageSize","_meta":{"title":"Get Image Size"}},"129:111":{"inputs":{"frame_idx":-1,"strength":0.7,"positive":["129:115",0],"negative":["129:115",1],"vae":["129:127",2],"latent":["129:115",2],"image":["129:99",0]},"class_type":"LTXVAddGuide","_meta":{"title":"LTXVAddGuide"}},"129:114":{"inputs":{"value":25},"class_type":"PrimitiveInt","_meta":{"title":"Frame Rate(int)"}},"129:115":{"inputs":{"frame_idx":0,"strength":0.7,"positive":["129:109",0],"negative":["129:109",1],"vae":["129:127",2],"latent":["129:108",0],"image":["129:104",0]},"class_type":"LTXVAddGuide","_meta":{"title":"LTXVAddGuide"}},"129:116":{"inputs":{"cfg":1,"model":["129:127",0],"positive":["129:111",0],"negative":["129:111",1]},"class_type":"CFGGuider","_meta":{"title":"CFG Guider"}},"129:117":{"inputs":{"eta":0,"s_noise":1},"class_type":"SamplerEulerAncestral","_meta":{"title":"SamplerEulerAncestral"}},"129:118":{"inputs":{"sigmas":"1., 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"},"class_type":"ManualSigmas","_meta":{"title":"ManualSigmas"}},"129:119":{"inputs":{"video_latent":["129:111",2],"audio_latent":["129:101",0]},"class_type":"LTXVConcatAVLatent","_meta":{"title":"LTXVConcatAVLatent"}},"129:120":{"inputs":{"noise":["129:100",0],"guider":["129:116",0],"sampler":["129:117",0],"sigmas":["129:118",0],"latent_image":["129:119",0]},"class_type":"SamplerCustomAdvanced","_meta":{"title":"SamplerCustomAdvanced"}},"129:123":{"inputs":{"expression":"a","values.a":["129:114",0]},"class_type":"ComfyMathExpression","_meta":{"title":"Math Expression"}},"129:124":{"inputs":{"resize_type":"scale dimensions","resize_type.width":["129:113",0],"resize_type.height":["129:98",0],"resize_type.crop":"center","scale_method":"nearest-exact","input":["31",0]},"class_type":"ResizeImageMaskNode","_meta":{"title":"Resize Image/Mask"}},"129:125":{"inputs":{"resize_type":"scale dimensions","resize_type.width":["129:113",0],"resize_type.height":["129:98",0],"resize_type.crop":"center","scale_method":"nearest-exact","input":["39",0]},"class_type":"ResizeImageMaskNode","_meta":{"title":"Resize Image/Mask"}},"129:113":{"inputs":{"value":1280},"class_type":"PrimitiveInt","_meta":{"title":"Width"}},"129:98":{"inputs":{"value":720},"class_type":"PrimitiveInt","_meta":{"title":"height"}},"129:112":{"inputs":{"text":"blurry, out of focus, overexposed, underexposed, low contrast, washed out colors, excessive noise, grainy texture, poor lighting, flickering, motion blur, distorted proportions, unnatural skin tones, deformed facial features, asymmetrical face, missing facial features, extra limbs, disfigured hands, wrong hand count, artifacts around text, unreadable text on shirt or hat, incorrect lettering on cap (“PNTR”), incorrect t-shirt slogan (“JUST DO IT”), missing microphone, misplaced microphone, inconsistent perspective, camera shake, incorrect depth of field, background too sharp, background clutter, distracting reflections, harsh shadows, inconsistent lighting direction, color banding, cartoonish rendering, 3D CGI look, unrealistic materials, uncanny valley effect, incorrect ethnicity, wrong gender, exaggerated expressions, smiling, laughing, exaggerated sadness, wrong gaze direction, eyes looking at camera, mismatched lip sync, silent or muted audio, distorted voice, robotic voice, echo, background noise, off-sync audio, missing sniff sounds, incorrect dialogue, added dialogue, repetitive speech, jittery movement, awkward pauses, incorrect timing, unnatural transitions, inconsistent framing, tilted camera, missing door or shelves, missing shallow depth of field, flat lighting, inconsistent tone, cinematic oversaturation, stylized filters, or AI artifacts.","clip":["129:103",0]},"class_type":"CLIPTextEncode","_meta":{"title":"CLIP Text Encode (Prompt)"}},"129:122":{"inputs":{"fps":["129:123",0],"bit_depth":8,"images":["129:105",0],"audio":["129:107",0]},"class_type":"CreateVideo","_meta":{"title":"Create Video"}},"129:105":{"inputs":{"tile_size":768,"overlap":64,"temporal_size":4096,"temporal_overlap":64,"samples":["129:106",2],"vae":["129:127",2]},"class_type":"VAEDecodeTiled","_meta":{"title":"VAE Decode (Tiled)"}},"129:107":{"inputs":{"samples":["129:121",1],"audio_vae":["129:126",0]},"class_type":"LTXVAudioVAEDecode","_meta":{"title":"LTXV Audio VAE Decode"}},"129:121":{"inputs":{"av_latent":["129:120",1]},"class_type":"LTXVSeparateAVLatent","_meta":{"title":"LTXVSeparateAVLatent"}},"129:128":{"inputs":{"text":"The camera move from a high position to a low position, keeping the character in the frame centered.\nMusic: Synthwave cyberpunk music with calm ambient synths and driving 80s beats.","clip":["129:103",0]},"class_type":"CLIPTextEncode","_meta":{"title":"CLIP Text Encode (Prompt)"}},"129:127":{"inputs":{"ckpt_name":"ltx-2.3-22b-distilled-fp8.safetensors"},"class_type":"CheckpointLoaderSimple","_meta":{"title":"Load Checkpoint"}},"129:126":{"inputs":{"ckpt_name":"ltx-2.3-22b-distilled-fp8.safetensors"},"class_type":"LTXVAudioVAELoader","_meta":{"title":"Load LTXV Audio VAE"}},"129:103":{"inputs":{"text_encoder":"gemma_3_12B_it_fp4_mixed.safetensors","ckpt_name":"ltx-2.3-22b-distilled-fp8.safetensors","device":"default"},"class_type":"LTXAVTextEncoderLoader","_meta":{"title":"LTXV Audio Text Encoder Loader"}},"129:130":{"inputs":{"expression":"a * b + 1","values.a":["129:102",0],"values.b":["129:114",0]},"class_type":"ComfyMathExpression","_meta":{"title":"Math Expression"}}};
+  var G_LTXIA2V = {"269":{"inputs":{"image":"cactus_man.png"},"class_type":"LoadImage","_meta":{"title":"Load Image"}},"276":{"inputs":{"audio":"ltx_23_audio.mp3","audioUI":"/api/view?filename=ltx_23_audio.mp3&type=input&subfolder=&rand=0.2922351513294337"},"class_type":"LoadAudio","_meta":{"title":"Load Audio"}},"341":{"inputs":{"filename_prefix":"video/LTX_2.3_ia2v","format":"auto","codec":"auto","video":["340:312",0]},"class_type":"SaveVideo","_meta":{"title":"Save Video"}},"340:285":{"inputs":{"noise_seed":42},"class_type":"RandomNoise","_meta":{"title":"RandomNoise"}},"340:286":{"inputs":{"noise_seed":225158785956033},"class_type":"RandomNoise","_meta":{"title":"RandomNoise"}},"340:287":{"inputs":{"video_latent":["340:296",0],"audio_latent":["340:309",1]},"class_type":"LTXVConcatAVLatent","_meta":{"title":"LTXVConcatAVLatent"}},"340:288":{"inputs":{"sampler_name":"euler"},"class_type":"KSamplerSelect","_meta":{"title":"KSamplerSelect"}},"340:289":{"inputs":{"sigmas":"0.85, 0.7250, 0.4219, 0.0"},"class_type":"ManualSigmas","_meta":{"title":"ManualSigmas"}},"340:290":{"inputs":{"cfg":1,"model":["340:293",0],"positive":["340:292",0],"negative":["340:292",1]},"class_type":"CFGGuider","_meta":{"title":"CFG Guider"}},"340:291":{"inputs":{"noise":["340:286",0],"guider":["340:315",0],"sampler":["340:298",0],"sigmas":["340:308",0],"latent_image":["340:326",0]},"class_type":"SamplerCustomAdvanced","_meta":{"title":"SamplerCustomAdvanced"}},"340:292":{"inputs":{"positive":["340:307",0],"negative":["340:307",1],"latent":["340:309",0]},"class_type":"LTXVCropGuides","_meta":{"title":"LTXVCropGuides"}},"340:295":{"inputs":{"samples":["340:309",0],"upscale_model":["340:313",0],"vae":["340:317",2]},"class_type":"LTXVLatentUpsampler","_meta":{"title":"LTXVLatentUpsampler"}},"340:296":{"inputs":{"strength":1,"bypass":["340:305",0],"vae":["340:317",2],"image":["340:334",0],"latent":["340:295",0]},"class_type":"LTXVImgToVideoInplace","_meta":{"title":"LTXVImgToVideoInplace"}},"340:298":{"inputs":{"sampler_name":"euler"},"class_type":"KSamplerSelect","_meta":{"title":"KSamplerSelect"}},"340:303":{"inputs":{"samples":["340:311",1],"audio_vae":["340:335",0]},"class_type":"LTXVAudioVAEDecode","_meta":{"title":"LTXV Audio VAE Decode"}},"340:306":{"inputs":{"text":["340:348",0],"clip":["340:318",0]},"class_type":"CLIPTextEncode","_meta":{"title":"CLIP Text Encode (Prompt)"}},"340:307":{"inputs":{"frame_rate":["340:304",0],"positive":["340:306",0],"negative":["340:314",0]},"class_type":"LTXVConditioning","_meta":{"title":"LTXVConditioning"}},"340:308":{"inputs":{"sigmas":"1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"},"class_type":"ManualSigmas","_meta":{"title":"ManualSigmas"}},"340:309":{"inputs":{"av_latent":["340:291",0]},"class_type":"LTXVSeparateAVLatent","_meta":{"title":"LTXVSeparateAVLatent"}},"340:310":{"inputs":{"noise":["340:285",0],"guider":["340:290",0],"sampler":["340:288",0],"sigmas":["340:289",0],"latent_image":["340:287",0]},"class_type":"SamplerCustomAdvanced","_meta":{"title":"SamplerCustomAdvanced"}},"340:311":{"inputs":{"av_latent":["340:310",0]},"class_type":"LTXVSeparateAVLatent","_meta":{"title":"LTXVSeparateAVLatent"}},"340:314":{"inputs":{"text":"pc game, console game, video game, cartoon, childish, ugly","clip":["340:318",0]},"class_type":"CLIPTextEncode","_meta":{"title":"CLIP Text Encode (Prompt)"}},"340:315":{"inputs":{"cfg":1,"model":["340:293",0],"positive":["340:307",0],"negative":["340:307",1]},"class_type":"CFGGuider","_meta":{"title":"CFG Guider"}},"340:316":{"inputs":{"tile_size":768,"overlap":64,"temporal_size":4096,"temporal_overlap":4,"samples":["340:311",0],"vae":["340:317",2]},"class_type":"VAEDecodeTiled","_meta":{"title":"VAE Decode (Tiled)"}},"340:325":{"inputs":{"strength":0.7,"bypass":["340:305",0],"vae":["340:317",2],"image":["340:334",0],"latent":["340:302",0]},"class_type":"LTXVImgToVideoInplace","_meta":{"title":"LTXVImgToVideoInplace"}},"340:330":{"inputs":{"value":1280},"class_type":"PrimitiveInt","_meta":{"title":"Width"}},"340:333":{"inputs":{"value":0,"width":["340:330",0],"height":["340:324",0]},"class_type":"SolidMask","_meta":{"title":"Create Solid Mask"}},"340:335":{"inputs":{"ckpt_name":"ltx-2.3-22b-dev-fp8.safetensors"},"class_type":"LTXVAudioVAELoader","_meta":{"title":"Load LTXV Audio VAE"}},"340:305":{"inputs":{"value":false},"class_type":"PrimitiveBoolean","_meta":{"title":"Switch to Text to Video?"}},"340:294":{"inputs":{"longer_edge":1536,"images":["340:297",0]},"class_type":"ResizeImagesByLongerEdge","_meta":{"title":"Resize Images by Longer Edge (DEPRECATED)"}},"340:334":{"inputs":{"img_compression":18,"image":["340:294",0]},"class_type":"LTXVPreprocess","_meta":{"title":"LTXV Preprocess"}},"340:301":{"inputs":{"expression":"a/2","values.a":["340:324",0]},"class_type":"ComfyMathExpression","_meta":{"title":"Math Expression"}},"340:299":{"inputs":{"expression":"a/2","values.a":["340:330",0]},"class_type":"ComfyMathExpression","_meta":{"title":"Math Expression"}},"340:304":{"inputs":{"expression":"a","values.a":["340:323",0]},"class_type":"ComfyMathExpression","_meta":{"title":"Math Expression"}},"340:312":{"inputs":{"fps":["340:304",0],"bit_depth":8,"images":["340:316",0],"audio":["340:303",0]},"class_type":"CreateVideo","_meta":{"title":"Create Video"}},"340:331":{"inputs":{"value":9},"class_type":"PrimitiveFloat","_meta":{"title":"Duration"}},"340:323":{"inputs":{"value":24},"class_type":"PrimitiveInt","_meta":{"title":"Frame Rate"}},"340:302":{"inputs":{"width":["340:299",1],"height":["340:301",1],"length":["340:329",1],"batch_size":1},"class_type":"EmptyLTXVLatentVideo","_meta":{"title":"EmptyLTXVLatentVideo"}},"340:329":{"inputs":{"expression":"a * b + 1","values.a":["340:331",0],"values.b":["340:323",0]},"class_type":"ComfyMathExpression","_meta":{"title":"Math Expression"}},"340:324":{"inputs":{"value":720},"class_type":"PrimitiveInt","_meta":{"title":"Height"}},"340:332":{"inputs":{"start_index":0,"duration":["340:331",0],"audio":["276",0]},"class_type":"TrimAudioDuration","_meta":{"title":"Trim Audio Duration"}},"340:328":{"inputs":{"audio":["340:332",0],"audio_vae":["340:335",0]},"class_type":"LTXVAudioVAEEncode","_meta":{"title":"LTXV Audio VAE Encode"}},"340:326":{"inputs":{"video_latent":["340:325",0],"audio_latent":["340:327",0]},"class_type":"LTXVConcatAVLatent","_meta":{"title":"LTXVConcatAVLatent"}},"340:327":{"inputs":{"samples":["340:328",0],"mask":["340:333",0]},"class_type":"SetLatentNoiseMask","_meta":{"title":"Set Latent Noise Mask"}},"340:313":{"inputs":{"model_name":"ltx-2.3-spatial-upscaler-x2-1.1.safetensors"},"class_type":"LatentUpscaleModelLoader","_meta":{"title":"Load Latent Upscale Model"}},"340:293":{"inputs":{"lora_name":"ltx_2.3_22b_distilled_1.1_lora_dynamic_fro09_avg_rank_111_bf16.safetensors","strength_model":0.5,"model":["340:317",0]},"class_type":"LoraLoaderModelOnly","_meta":{"title":"Load LoRA"}},"340:317":{"inputs":{"ckpt_name":"ltx-2.3-22b-dev-fp8.safetensors"},"class_type":"CheckpointLoaderSimple","_meta":{"title":"Load Checkpoint"}},"340:318":{"inputs":{"text_encoder":"gemma_3_12B_it_fp4_mixed.safetensors","ckpt_name":"ltx-2.3-22b-dev-fp8.safetensors","device":"default"},"class_type":"LTXAVTextEncoderLoader","_meta":{"title":"LTXV Audio Text Encoder Loader"}},"340:319":{"inputs":{"value":"The fuzzy cactus creature is talking to the viewer as it grips the steering wheel with one hand, the other hand gestures naturally as it speaks. The car is moving, revealing the sunlit coastal background, static camera fixed on character, smooth side-tracking shot matching the car speed\n\nscene: Sunlit coastal road trip, clear coastal background\ncharacter: Fuzzy cactus creature with big square sunglasses and a Hawaiian shirt\naction: One hand grips the steering wheel, the other gestures naturally while talking to the camera\ncamera: Fixed on character, smooth side-tracking shot matching car speed"},"class_type":"PrimitiveStringMultiline","_meta":{"title":"Prompt"}},"340:297":{"inputs":{"resize_type":"scale dimensions","resize_type.width":["340:330",0],"resize_type.height":["340:324",0],"resize_type.crop":"center","scale_method":"lanczos","input":["269",0]},"class_type":"ResizeImageMaskNode","_meta":{"title":"Resize Image/Mask"}},"340:345":{"inputs":{"lora_name":"gemma-3-12b-it-abliterated_lora_rank64_bf16.safetensors","strength_model":1,"strength_clip":1,"model":["340:293",0],"clip":["340:318",0]},"class_type":"LoraLoader","_meta":{"title":"Load LoRA (Model and CLIP)"}},"340:346":{"inputs":{"prompt":["340:319",0],"max_length":2048,"sampling_mode":"on","sampling_mode.temperature":0.7,"sampling_mode.top_k":64,"sampling_mode.top_p":0.95,"sampling_mode.min_p":0.05,"sampling_mode.repetition_penalty":1.05,"sampling_mode.seed":0,"sampling_mode.presence_penalty":0,"thinking":false,"use_default_template":true,"clip":["340:345",1]},"class_type":"TextGenerateLTX2Prompt","_meta":{"title":"Generate LTX2 Prompt"}},"340:347":{"inputs":{"source":["340:348",0]},"class_type":"PreviewAny","_meta":{"title":"Preview as Text"}},"340:348":{"inputs":{"switch":["340:349",0],"on_false":["340:319",0],"on_true":["340:346",0]},"class_type":"ComfySwitchNode","_meta":{"title":"Switch"}},"340:349":{"inputs":{"value":true},"class_type":"PrimitiveBoolean","_meta":{"title":"Boolean (Enable Prompt Enhance)"}}};
+
+  var G_ZBASE = {"9":{"inputs":{"filename_prefix":"z-image-base","images":["76:65",0]},"class_type":"SaveImage","_meta":{"title":"Save Image"}},"76:67":{"inputs":{"text":"A fashion photography work full of surreal romanticism, using a low-angle upward shooting composition, with a clear light blue sky as the background, and the visual focus concentrated on the fantasy blue vegetation and the model walking through it.\n\nThe vegetation in the picture is processed into varying shades of blue, from light ice blue to deep cobalt blue. The textures of the leaves and branches are delicate and realistic. The warm brown tree trunks form a sharp contrast with the cool blue leaves, resembling a dreamy forest from another world. An African-American model wearing a yellow and white vertical striped long dress walks slowly on the sand. The warm tones of the dress echo with the surrounding cool blue vegetation. The noon sun casts clear shadows on the sand, enhancing the sense of space and reality in the picture.\n\nThe entire scene, with its clean and transparent colors and fantasy settings, not only exudes the vastness of the natural wilderness but also presents a quiet and poetic high-fashion sense due to the surreal vegetation.","clip":["76:62",0]},"class_type":"CLIPTextEncode","_meta":{"title":"CLIP Text Encode (Positive Prompt)"}},"76:68":{"inputs":{"width":1024,"height":1024,"batch_size":1},"class_type":"EmptySD3LatentImage","_meta":{"title":"EmptySD3LatentImage"}},"76:63":{"inputs":{"vae_name":"ae.safetensors"},"class_type":"VAELoader","_meta":{"title":"Load VAE"}},"76:62":{"inputs":{"clip_name":"qwen_3_4b.safetensors","type":"lumina2","device":"default"},"class_type":"CLIPLoader","_meta":{"title":"Load CLIP"}},"76:65":{"inputs":{"samples":["76:69",0],"vae":["76:63",0]},"class_type":"VAEDecode","_meta":{"title":"VAE Decode"}},"76:70":{"inputs":{"shift":3,"model":["76:66",0]},"class_type":"ModelSamplingAuraFlow","_meta":{"title":"ModelSamplingAuraFlow"}},"76:66":{"inputs":{"unet_name":"z_image_bf16.safetensors","weight_dtype":"default"},"class_type":"UNETLoader","_meta":{"title":"Load Diffusion Model"}},"76:71":{"inputs":{"text":"","clip":["76:62",0]},"class_type":"CLIPTextEncode","_meta":{"title":"CLIP Text Encode (Negative Prompt)"}},"76:69":{"inputs":{"seed":770044821593082,"steps":25,"cfg":4,"sampler_name":"res_multistep","scheduler":"simple","denoise":1,"model":["76:70",0],"positive":["76:67",0],"negative":["76:71",0],"latent_image":["76:68",0]},"class_type":"KSampler","_meta":{"title":"KSampler"}}};
+  var G_HIDREAMO1 = {"6":{"inputs":{"ckpt_name":"hidream_o1_image_dev_fp8_scaled.safetensors"},"class_type":"CheckpointLoaderSimple","_meta":{"title":"Load Checkpoint"}},"104":{"inputs":{"positive":["110",0],"negative":["188",0],"images.image_1":["213",0]},"class_type":"HiDreamO1ReferenceImages","_meta":{"title":"HiDream-O1 Reference Images"}},"105":{"inputs":{"samples":["108",0],"vae":["6",2]},"class_type":"VAEDecode","_meta":{"title":"VAE Decode"}},"108":{"inputs":{"add_noise":true,"noise_seed":270186383729385,"cfg":1,"model":["124",0],"positive":["152",0],"negative":["153",0],"sampler":["125",0],"sigmas":["112",0],"latent_image":["155",0]},"class_type":"SamplerCustom","_meta":{"title":"SamplerCustom"}},"110":{"inputs":{"text":["221",0],"clip":["6",1]},"class_type":"CLIPTextEncode","_meta":{"title":"CLIP Text Encode (Prompt)"}},"112":{"inputs":{"scheduler":"normal","steps":28,"denoise":1,"model":["124",0]},"class_type":"BasicScheduler","_meta":{"title":"BasicScheduler"}},"124":{"inputs":{"noise_scale":7.6,"model":["6",0]},"class_type":"ModelNoiseScale","_meta":{"title":"ModelNoiseScale"}},"125":{"inputs":{"s_noise":1,"s_noise_end":1,"noise_clip_std":2.5},"class_type":"SamplerLCM","_meta":{"title":"SamplerLCM"}},"152":{"inputs":{"switch":["154",0],"on_false":["110",0],"on_true":["104",0]},"class_type":"ComfySwitchNode","_meta":{"title":"Switch"}},"153":{"inputs":{"switch":["154",0],"on_false":["188",0],"on_true":["104",1]},"class_type":"ComfySwitchNode","_meta":{"title":"Switch"}},"154":{"inputs":{"value":true},"class_type":"PrimitiveBoolean","_meta":{"title":"Switch to Image Edit"}},"155":{"inputs":{"switch":["154",0],"on_false":["156",0],"on_true":["172",0]},"class_type":"ComfySwitchNode","_meta":{"title":"Switch"}},"156":{"inputs":{"width":2048,"height":2048,"batch_size":1},"class_type":"EmptyHiDreamO1LatentImage","_meta":{"title":"Empty HiDream-O1 Latent Image"}},"157":{"inputs":{"image":["213",0]},"class_type":"GetImageSize","_meta":{"title":"Get Image Size"}},"171":{"inputs":{"value":"Transform the background into a rainy neon city street at night, with wet asphalt reflections, blurred neon signs"},"class_type":"PrimitiveStringMultiline","_meta":{"title":"User Prompt"}},"172":{"inputs":{"width":["218",1],"height":["219",1],"batch_size":1},"class_type":"EmptyHiDreamO1LatentImage","_meta":{"title":"Empty HiDream-O1 Latent Image"}},"176":{"inputs":{"switch":["177",0],"on_false":["171",0],"on_true":["175:198",0]},"class_type":"ComfySwitchNode","_meta":{"title":"Switch"}},"177":{"inputs":{"value":false},"class_type":"PrimitiveBoolean","_meta":{"title":"Enable Prompt Refine?"}},"188":{"inputs":{"text":"","clip":["6",1]},"class_type":"CLIPTextEncode","_meta":{"title":"CLIP Text Encode (Prompt)"}},"213":{"inputs":{"image":"noir_portrait.png"},"class_type":"LoadImage","_meta":{"title":"Load Image"}},"218":{"inputs":{"expression":"floor(a/32)*32","values.a":["157",0]},"class_type":"ComfyMathExpression","_meta":{"title":"Math Expression"}},"219":{"inputs":{"expression":"floor(a/32)*32","values.a":["157",1]},"class_type":"ComfyMathExpression","_meta":{"title":"Math Expression"}},"221":{"inputs":{"source":["176",0]},"class_type":"PreviewAny","_meta":{"title":"Preview as Text"}},"227":{"inputs":{"filename_prefix":"hidream_o1","images":["105",0]},"class_type":"SaveImage","_meta":{"title":"Save Image"}},"175:165":{"inputs":{"value":"<|turn>system\n你是专业的AI图像生成Prompt工程师的Prompt Engineering Engine,也是一名拥有百科知识和视觉导演能力的创意总监.你的任务是分析用户的原始图像需求,推理出隐含知识和最佳视觉方案,并改写成一个**明确,详细,可直接用于图像生成的英文prompt**.\n\n## 核心目标\n\n图像生成模型只能执行直接的视觉描述,不能自行补全背景知识,逻辑关系或文字内容.因此,你必须提前完成知识解析,空间规划和视觉导演,把结果显式写入prompt中.\n\n使用 SCALIST 框架扩写每个画面:\n- **Subject**: 主体的身份,外观,颜色,材质,纹理,动作,表情,服饰.\n- **Composition**: 镜头景别,视角,主体位置,前景/中景/背景层次,留白和视觉焦点.\n- **Action**: 主体正在做什么,动作方向,姿态,互动关系.\n- **Location**: 场景地点,室内/室外,时代,天气,时间段,环境细节.\n- **Image style**: photorealistic, cinematic, oil painting, watercolor, anime, 3D render 等,并匹配合适的光线和色彩氛围.\n- **Specs**: 摄影/渲染参数,如 85mm lens, low-angle shot, shallow depth of field, soft diffused light, dramatic backlighting, matte texture, sharp focus.\n- **Text rendering**: 如果用户要求文字,必须把准确文字放在英文双引号中,并说明字体风格,颜色,大小,材质和精确位置.\n\n1. **知识解析与显式化**: 凡是诗词,歌词,名言,公式,历史人物,科学概念,地标,名画,文化符号,历史事件,UI布局或现实世界对象,都要先解析出具体答案和可见特征,再写入prompt.不要只写 \"Mona Lisa\",\"Dunkirk evacuation\",\"freedom\" 这类需要模型自行理解的词.\n2. **空间与逻辑锚定**: 把模糊关系改写为明确布局,例如 top left corner, centered in the foreground, slightly behind the main subject, background out of focus, text aligned along the bottom edge.不要使用\"旁边\"\"一些\"\"好看\"等含糊表达.\n3. **文字排版精度**: 中文,英文,公式,多语言文本都必须逐字保留在引号中,例如 \"床前明月光,疑是地上霜.举头望明月,低头思故乡.\" 或 \"E = mc²\";同时指定字体(calligraphy, serif, sans-serif, handwritten),颜色,材质和位置.\n4. **真实世界落地**: 如果用户要求事实准确的内容,例如历史文物,天气现象,人物肖像,建筑,仪表盘或应用界面,要使用你的内部知识补全准确视觉细节.\n5. **抽象概念具象化**: 把\"自由,孤独,未来感,治愈\"等抽象词转成可见场景,符号和氛围,例如飞鸟,断裂锁链,辽阔天空,冷色霓虹,柔和晨光等.\n\n## 示例与学习\n\n- 用户说\"李白的静夜思写在墙上\",prompt 应写出完整中文诗句,并指定它以优雅中国书法写在古旧石墙的哪个位置.\n- 用户说\"三大力学的奠基人\"或\"爱因斯坦写质能方程\",prompt 应解析出 Isaac Newton 或 Albert Einstein,并描述人物外貌,时代服饰,黑板,公式 \"E = mc²\" 等可见内容.\n- 用户说\"蒙娜丽莎\"\"比萨斜塔\"\"福字\"\"敦刻尔克大撤退\",prompt 应描述对应画面特征: 神秘微笑与交叠双手,倾斜白色大理石钟楼与拱廊,红底金色/黑色书法 \"福\",1940年海滩上等待撤离的士兵和海面船只.\n\n## 输出prompt要求\n\n- prompt 必须是一个英文的,连贯自然的单段落,像 Creative Director's Brief,而不是关键词堆砌或 tag soup.\n- 长度通常为 80-220 词;简单需求可以更短,复杂画面可以更长.\n- 最重要的主体和画面意图放在开头,然后自然展开构图,动作,地点,风格,技术参数和文字渲染.\n- 使用完整句子,丰富但准确的形容词,摄影/绘画/设计术语.\n- 不要包含任何需要图像模型继续推理才能理解的表达.\n- prompt 必须自包含,仅凭prompt本身就能准确生成图片.\n\n## 执行步骤\n\n1. **Analyze**: 识别核心主体,用户意图,文字要求,参考限制和需要解析的隐含知识.\n2. **Reason**: 选择最适宜画面的光线,镜头,角度,纹理,风格,空间布局和事实细节.\n3. **Rewrite**: 输出最终增强后的英文单段落prompt.\n\n只输出JSON,不加任何其他文字:\n{\"prompt\": \"英文单段落prompt\", \"reasoning\": \"你的推理和知识解析过程(需要用用户输入的提示词语言来生成)\", \"resolved_knowledge\": \"你解析了哪些隐含知识(根据输入用户语言简述,如果没有隐含知识用对应语言写'无')\"} \n<|turn|>"},"class_type":"PrimitiveStringMultiline","_meta":{"title":"REWRITE_SYSTEM_PROMPT"}},"175:170":{"inputs":{"string":"<|turn>user\n{user_prompt}<|turn|>\n<|turn>model\n","find":"{user_prompt}","replace":["171",0]},"class_type":"StringReplace","_meta":{"title":"Replace Text"}},"175:166":{"inputs":{"string_a":["175:165",0],"string_b":["175:170",0],"delimiter":""},"class_type":"StringConcatenate","_meta":{"title":"Concatenate Text"}},"175:164":{"inputs":{"prompt":["175:166",0],"max_length":2048,"sampling_mode":"on","sampling_mode.temperature":0.7,"sampling_mode.top_k":64,"sampling_mode.top_p":0.95,"sampling_mode.min_p":0.05,"sampling_mode.repetition_penalty":1.05,"sampling_mode.seed":0,"sampling_mode.presence_penalty":0,"thinking":false,"use_default_template":false,"clip":["175:167",0],"image":["213",0]},"class_type":"TextGenerate","_meta":{"title":"Generate Text"}},"175:167":{"inputs":{"clip_name":"gemma4_e4b_it_fp8_scaled.safetensors","type":"stable_diffusion","device":"default"},"class_type":"CLIPLoader","_meta":{"title":"Load CLIP"}},"175:198":{"inputs":{"json_string":["175:202",0],"key":"prompt"},"class_type":"JsonExtractString","_meta":{"title":"Extract Text from JSON"}},"175:201":{"inputs":{"string":["175:164",0],"regex_pattern":"^```(?:json)?\\s*\\n?","replace":"","case_insensitive":false,"multiline":false,"dotall":false,"count":1},"class_type":"RegexReplace","_meta":{"title":"Replace Text (Regex)"}},"175:202":{"inputs":{"string":["175:201",0],"regex_pattern":"\\n?```\\s*$","replace":"","case_insensitive":false,"multiline":false,"dotall":false,"count":1},"class_type":"RegexReplace","_meta":{"title":"Replace Text (Regex)"}}};
+
   var WORKFLOWS = [
     {
-      id:"zimage", label:"Z-Image", sub:"text → image", kind:"image", glyph:GI_IMG,
+      id:"zimage", label:"Z Turbo", sub:"fast · text → image", kind:"image", glyph:GI_IMG,
       grad:"linear-gradient(105deg,#FF6A3D,#B14BFF)", accent:"#B14BFF",
+      desc:"Fast text-to-image. An 8-step turbo model — the quickest way to turn a prompt into a picture. Ready to use.",
       fields:["size","seed","quality"],
       placeholder:"Describe the image… e.g. a DJ at a neon-lit club, photoreal",
       defaults:{ prompt:"", width:1024, height:1024, seedMode:"random", quality:false },
@@ -576,58 +635,118 @@
       }
     },
     {
-      id:"anima", label:"Anima", sub:"text → image", kind:"image", glyph:GI_IMG,
-      grad:"linear-gradient(105deg,#6d7bf5,#a855f7)", accent:"#8a7bff",
+      id:"zbase", label:"Z Base", sub:"text \u2192 image", kind:"image", glyph:GI_IMG,
+      grad:"linear-gradient(105deg,#FF8A5B,#7C3AED)", accent:"#a855f7",
+      desc:"Z-Image base model \u2014 higher quality than Turbo at 25 steps. Slower, more detailed. Ready to use.",
       fields:["size","seed"],
-      placeholder:"Describe the image…",
-      defaults:{ prompt:P_ANIMA, width:1024, height:1024, seedMode:"random" }
-      // needs imported JSON (custom Anima subgraph)
+      placeholder:"Describe the image\u2026",
+      defaults:{ prompt:"", width:1024, height:1024, seedMode:"random" },
+      apiGraph:G_ZBASE,
+      inject:{ prompt:["76:67","text"], seeds:[["76:69","seed"]], width:["76:68","width"], height:["76:68","height"] }
     },
     {
-      id:"ernie", label:"Ernie", sub:"text → image", kind:"image", glyph:GI_IMG,
-      grad:"linear-gradient(105deg,#22d3ee,#3b82f6)", accent:"#38bdf8",
-      fields:["size","seed"],
-      placeholder:"Describe the image…",
-      defaults:{ prompt:P_ERNIE, width:1024, height:1024, seedMode:"random" }
-      // needs imported JSON (Ernie Image Turbo subgraph)
-    },
-    {
-      id:"hidream", label:"HiDream", sub:"image / edit", kind:"image", glyph:GI_EDIT,
+      id:"hidream", label:"HiDream", sub:"text → image", kind:"image", glyph:GI_IMG,
       grad:"linear-gradient(105deg,#f59e0b,#ef4444)", accent:"#fb923c",
-      fields:["size","seed","inputs"],
-      placeholder:"Describe the image, or how to edit the input photo…",
-      defaults:{ prompt:P_HIDREAM, width:2048, height:2048, seedMode:"random", image:"noir_portrait.png" },
-      inputs:[
-        {type:"image", key:"image", label:"Input image (for image-edit mode)", hint:"Optional. Used when this workflow runs in Image-Edit mode (the “Switch to Image Edit” toggle in ComfyUI)."}
-      ]
+      desc:"Text-to-image, full quality. Slower but richly detailed — your uncensored HiDream model, wired with the 4-encoder QuadrupleCLIPLoader. Ready to use.",
+      fields:["size","seed"],
+      placeholder:"Describe the image…",
+      defaults:{ prompt:P_HIDREAM, width:1024, height:1024, seedMode:"random" },
+      builtin:true,
+      build:function(prompt, seed, s){
+        return {
+          "1":{class_type:"UNETLoader",inputs:{unet_name:settings.hdUnet,weight_dtype:"fp8_e4m3fn"}},
+          "2":{class_type:"ModelSamplingSD3",inputs:{shift:num(settings.hdShift,3),model:["1",0]}},
+          "3":{class_type:"QuadrupleCLIPLoader",inputs:{clip_name1:settings.hdClipL,clip_name2:settings.hdClipG,clip_name3:settings.hdT5,clip_name4:settings.hdLlama}},
+          "4":{class_type:"CLIPTextEncode",inputs:{text:prompt,clip:["3",0]}},
+          "5":{class_type:"CLIPTextEncode",inputs:{text:"blurry, low quality, distorted, deformed, watermark, text",clip:["3",0]}},
+          "6":{class_type:"EmptySD3LatentImage",inputs:{width:s.width,height:s.height,batch_size:1}},
+          "7":{class_type:"KSampler",inputs:{seed:seed,steps:num(settings.hdSteps,30),cfg:num(settings.hdCfg,5),sampler_name:settings.hdSampler||"euler",scheduler:settings.hdScheduler||"normal",denoise:1,model:["2",0],positive:["4",0],negative:["5",0],latent_image:["6",0]}},
+          "8":{class_type:"VAELoader",inputs:{vae_name:"ae.safetensors"}},
+          "9":{class_type:"VAEDecode",inputs:{samples:["7",0],vae:["8",0]}},
+          "10":{class_type:"SaveImage",inputs:{filename_prefix:settings.hdPrefix||"HiDream",images:["9",0]}}
+        };
+      }
     },
     {
-      id:"iclora", label:"IC-LoRA", sub:"depth → video", kind:"video", glyph:GI_VID,
-      grad:"linear-gradient(105deg,#39D98A,#2dd4bf)", accent:"#2dd4bf",
-      fields:["size","seed","inputs"],
-      placeholder:"Describe the motion and scene…",
-      defaults:{ prompt:P_ICLORA, width:1280, height:704, seedMode:"fixed", seed:0, fps:25, image:"the_forgotten_gate.png", video:"stone_ruins.mp4" },
-      inputs:[
-        {type:"image", key:"image", label:"First frame image"},
-        {type:"file",  key:"video", label:"Control video", hint:"Filename already in ComfyUI/input (the depth guide source)."},
-        {type:"num",   key:"fps",   label:"FPS"}
-      ]
+      id:"hidreamo1", label:"HiDream-O1", sub:"image edit", kind:"image", glyph:GI_EDIT,
+      grad:"linear-gradient(105deg,#fb923c,#f43f5e)", accent:"#fb923c",
+      desc:"HiDream-O1 (dev) image edit \u2014 upload a photo and describe the change. Set to edit mode in your export. Ready to use.",
+      fields:["seed","inputs"],
+      placeholder:"Describe the edit\u2026 e.g. make the background a rainy neon street",
+      defaults:{ prompt:"Transform the background into a rainy neon city street at night, wet reflections", seedMode:"random", image:"" },
+      apiGraph:G_HIDREAMO1,
+      inject:{ prompt:["171","value"], seeds:[["108","noise_seed"]], image:["213","image"] },
+      inputs:[ {type:"image", key:"image", label:"Image to edit", hint:"Upload the photo you want to change."} ]
     },
     {
-      id:"idlora", label:"ID-LoRA", sub:"talking video", kind:"video", glyph:GI_VID,
+      id:"qwen", label:"Qwen", sub:"text \u2192 image", kind:"image", glyph:GI_IMG,
+      grad:"linear-gradient(105deg,#8b5cf6,#d946ef)", accent:"#c084fc",
+      desc:"Text-to-image with Qwen-Image (2512) plus a 360\u00b0 LoRA \u2014 makes panoramic / equirectangular scenes, great at legible text. Ready to use.",
+      fields:["size","seed"],
+      placeholder:"Describe the image\u2026",
+      defaults:{ prompt:P_QWEN, width:2048, height:1024, seedMode:"random" },
+      apiGraph:G_QWEN,
+      inject:{ prompt:["269","value"], seeds:[["238:230","seed"]], width:["238:232","width"], height:["238:232","height"] }
+    },
+    {
+      id:"qwenedit", label:"Qwen Edit", sub:"image edit", kind:"image", glyph:GI_EDIT,
+      grad:"linear-gradient(105deg,#06b6d4,#3b82f6)", accent:"#22d3ee",
+      desc:"Image editing \u2014 upload a photo and describe the change. Qwen-Image-Edit (2511) with the action LoRA. Ready to use.",
+      fields:["seed","inputs"],
+      placeholder:"Describe the edit\u2026 e.g. change the background to a beach",
+      defaults:{ prompt:P_QWENEDIT, seedMode:"random", image:"" },
+      apiGraph:G_QWENEDIT,
+      inject:{ prompt:["170:151","prompt"], seeds:[["170:169","seed"]], image:["223","image"] },
+      inputs:[ {type:"image", key:"image", label:"Image to edit", hint:"Upload the photo you want to change."} ]
+    },
+    {
+      id:"ltxt2v", label:"LTX T2V", sub:"text \u2192 video", kind:"video", glyph:GI_VID,
       grad:"linear-gradient(105deg,#f472b6,#a855f7)", accent:"#e879c6",
+      desc:"Text-to-video with LTX-2.3, including prompt-enhance and synced audio. Type a prompt, get a clip. Ready to use.",
       fields:["size","seed","inputs"],
-      placeholder:"Use [VISUAL]: … [SPEECH]: … [SOUNDS]: …",
-      defaults:{ prompt:P_IDLORA, width:1280, height:720, seedMode:"random", fps:25, duration:10, image:"vintage_thinker.png", audio:"ltx23_reference_audio.mp3" },
-      inputs:[
-        {type:"image", key:"image",    label:"First frame image"},
-        {type:"file",  key:"audio",    label:"Reference audio", hint:"Filename already in ComfyUI/input (drives the lip-sync)."},
-        {type:"num",   key:"fps",      label:"FPS"},
-        {type:"num",   key:"duration", label:"Duration (seconds)"}
-      ]
+      placeholder:"Describe the video scene and motion\u2026",
+      defaults:{ prompt:P_LTX, width:1280, height:720, seedMode:"random", fps:25, duration:5 },
+      apiGraph:G_LTXT2V,
+      inject:{ prompt:["267:266","value"], seeds:[["267:216","noise_seed"],["267:237","noise_seed"]], width:["267:257","value"], height:["267:258","value"], fps:["267:260","value"], duration:["267:225","value"] },
+      inputs:[ {type:"num", key:"fps", label:"FPS"}, {type:"num", key:"duration", label:"Duration (seconds)"} ]
+    },
+    {
+      id:"ltxi2v", label:"LTX I2V", sub:"image \u2192 video", kind:"video", glyph:GI_VID,
+      grad:"linear-gradient(105deg,#34d399,#22d3ee)", accent:"#34d399",
+      desc:"Image-to-video with LTX-2.3 \u2014 upload a still and it animates into a moving clip. Ready to use.",
+      fields:["size","seed","inputs"],
+      placeholder:"Describe how the image should move\u2026",
+      defaults:{ prompt:"Make this scene come alive", width:1280, height:720, seedMode:"random", fps:25, duration:5, image:"" },
+      apiGraph:G_LTXI2V,
+      inject:{ prompt:["320:319","value"], seeds:[["320:276","noise_seed"],["320:277","noise_seed"]], width:["320:312","value"], height:["320:299","value"], fps:["320:300","value"], duration:["320:301","value"], image:["269","image"] },
+      inputs:[ {type:"image", key:"image", label:"Source image", hint:"The still photo to animate."}, {type:"num", key:"fps", label:"FPS"}, {type:"num", key:"duration", label:"Duration (seconds)"} ]
+    },
+    {
+      id:"ltxflf2v", label:"LTX FLF", sub:"frames \u2192 video", kind:"video", glyph:GI_VID,
+      grad:"linear-gradient(105deg,#fbbf24,#f97316)", accent:"#fbbf24",
+      desc:"First & last frame to video \u2014 give a start and end image and LTX fills the motion between them. Ready to use.",
+      fields:["size","seed","inputs"],
+      placeholder:"Describe the motion between the two frames\u2026",
+      defaults:{ prompt:"The camera moves smoothly from the first frame to the last, natural motion", width:1280, height:720, seedMode:"random", fps:25, duration:5, image:"", image2:"" },
+      apiGraph:G_LTXFLF2V,
+      inject:{ prompt:["129:128","text"], seeds:[["129:100","noise_seed"]], width:["129:113","value"], height:["129:98","value"], fps:["129:114","value"], duration:["129:102","value"], image:["31","image"], image2:["39","image"] },
+      inputs:[ {type:"image", key:"image", label:"First frame"}, {type:"image", key:"image2", label:"Last frame"}, {type:"num", key:"fps", label:"FPS"}, {type:"num", key:"duration", label:"Duration (seconds)"} ]
+    },
+    {
+      id:"ltxia2v", label:"LTX Talk", sub:"img+audio \u2192 video", kind:"video", glyph:GI_VID,
+      grad:"linear-gradient(105deg,#fb7185,#f43f5e)", accent:"#fb7185",
+      desc:"Image + audio to talking video \u2014 a photo plus an audio clip, lip-synced with LTX-2.3. Ready to use.",
+      fields:["size","seed","inputs"],
+      placeholder:"Describe how the subject should move and speak\u2026",
+      defaults:{ prompt:P_LTXIA2V, width:1280, height:720, seedMode:"random", fps:24, duration:9, image:"", audio:"" },
+      apiGraph:G_LTXIA2V,
+      inject:{ prompt:["340:319","value"], seeds:[["340:285","noise_seed"],["340:286","noise_seed"]], width:["340:330","value"], height:["340:324","value"], fps:["340:323","value"], duration:["340:331","value"], image:["269","image"], audio:["276","audio"] },
+      inputs:[ {type:"image", key:"image", label:"Source image", hint:"The still photo to animate."}, {type:"file", key:"audio", label:"Audio clip", hint:"Filename already in ComfyUI/input (drives the lip-sync)."}, {type:"num", key:"fps", label:"FPS"}, {type:"num", key:"duration", label:"Duration (seconds)"} ]
     }
   ];
   function wfDef(id){ for(var i=0;i<WORKFLOWS.length;i++) if(WORKFLOWS[i].id===id) return WORKFLOWS[i]; return WORKFLOWS[0]; }
+  function groupOf(wf){ return wf.kind==="video" ? "video" : "image"; }
+  function firstInGroup(g){ for(var i=0;i<WORKFLOWS.length;i++) if(groupOf(WORKFLOWS[i])===g) return WORKFLOWS[i].id; return "zimage"; }
 
   /* ============ storage ============ */
   var LS = {
@@ -651,15 +770,18 @@
   // per-workflow remembered state
   var wfStates = LS.get("cs_wf", {});
   WORKFLOWS.forEach(function(w){
-    var base = Object.assign({ prompt:"", width:1024, height:1024, seedMode:"random", seed:0, fps:25, duration:10, image:"", video:"", audio:"", quality:false, lastResult:null }, w.defaults||{});
+    var base = Object.assign({ prompt:"", width:1024, height:1024, seedMode:"random", seed:0, fps:25, duration:10, image:"", image2:"", video:"", audio:"", quality:false, lastResult:null }, w.defaults||{});
     if(typeof base.seed!=="number") base.seed = randSeed();
     wfStates[w.id] = Object.assign(base, wfStates[w.id]||{});
   });
+  var lastWf = LS.get("cs_lastwf", {});
   var activeId = LS.get("cs_active", "zimage");
-  if(!wfDef(activeId)) activeId = "zimage";
+  if(!WORKFLOWS.some(function(w){ return w.id===activeId; })) activeId = "zimage";
+  var activeGroup = LS.get("cs_group", groupOf(wfDef(activeId)));
+  if(groupOf(wfDef(activeId))!==activeGroup) activeId = firstInGroup(activeGroup);
 
   function S(){ return wfStates[activeId]; }
-  function persist(){ LS.set("cs_wf", wfStates); LS.set("cs_active", activeId); }
+  function persist(){ LS.set("cs_wf", wfStates); LS.set("cs_active", activeId); LS.set("cs_lastwf", lastWf); LS.set("cs_group", activeGroup); }
   function persistSettings(){ LS.set("cs_settings", settings); }
 
   /* ============ helpers ============ */
@@ -818,7 +940,22 @@
     if(s.seedMode==="increment") return clampSeed(s.seed+1);
     return clampSeed(s.seed);
   }
-  function needsSetup(wf){ return !wf.builtin && !(imports[wf.id] && imports[wf.id].graph); }
+  function needsSetup(wf){ return !wf.builtin && !wf.apiGraph && !(imports[wf.id] && imports[wf.id].graph); }
+  // Precise value injection for baked-in API graphs (node ids known from the export).
+  function injectApi(graph, inj, f){
+    if(!inj) return graph;
+    function set(id,key,val){ if(id!=null && val!==undefined && val!==null && val!=="" && graph[id] && graph[id].inputs) graph[id].inputs[key]=val; }
+    if(inj.prompt) set(inj.prompt[0], inj.prompt[1], f.prompt);
+    if(inj.seeds && f.seed!=null){ for(var i=0;i<inj.seeds.length;i++) set(inj.seeds[i][0], inj.seeds[i][1], f.seed); }
+    if(inj.width)  set(inj.width[0],  inj.width[1],  num(f.width, undefined));
+    if(inj.height) set(inj.height[0], inj.height[1], num(f.height, undefined));
+    if(inj.fps && f.fps!=null && f.fps!=="")           set(inj.fps[0], inj.fps[1], num(f.fps, undefined));
+    if(inj.duration && f.duration!=null && f.duration!=="") set(inj.duration[0], inj.duration[1], num(f.duration, undefined));
+    if(inj.image)  set(inj.image[0],  inj.image[1],  f.image);
+    if(inj.image2) set(inj.image2[0], inj.image2[1], f.image2);
+    if(inj.audio)  set(inj.audio[0],  inj.audio[1],  f.audio);
+    return graph;
+  }
 
   async function generate(){
     if(busy) return;
@@ -838,9 +975,11 @@
       if(s.quality && settings.quality) p = raw.replace(/\s+$/,"")+"\n"+settings.quality;
       graph = wf.build(p, seed, s);
     } else {
-      graph = clone(imports[wf.id].graph);
-      var map = detectMap(graph);
-      applyMap(graph, { prompt:raw, seed:seed, width:s.width, height:s.height, fps:s.fps, duration:s.duration, image:s.image, video:s.video, audio:s.audio }, map, wf);
+      var hasImport = imports[wf.id] && imports[wf.id].graph;
+      graph = clone(hasImport ? imports[wf.id].graph : wf.apiGraph);
+      var f = { prompt:raw, seed:seed, width:s.width, height:s.height, fps:s.fps, duration:s.duration, image:s.image, image2:s.image2, video:s.video, audio:s.audio };
+      if(hasImport){ applyMap(graph, f, detectMap(graph), wf); }
+      else { injectApi(graph, wf.inject, f); }
     }
 
     busy=true; document.body.dataset.busy="1"; $("previewImg").style.opacity="0"; setProgress(null,"queued");
@@ -1067,9 +1206,9 @@
   function openImport(id){
     importTargetId=id; var wf=wfDef(id);
     $("importTitle").textContent="Set up "+wf.label;
-    $("importLead").textContent = wf.kind==="image"
-      ? (wf.label+" is a text→image workflow. Import its API JSON once and your prompt, size and seed map in automatically.")
-      : (wf.label+" uses custom video nodes. Import its API JSON once — prompt, size, seed"+(wf.id==="idlora"?", fps, duration":", fps")+", the first-frame image"+(wf.id==="idlora"?" and reference audio":" and control video")+" then map in from the controls.");
+    var maps = "prompt, size and seed"
+      + (wf.fields.indexOf("inputs")>=0 ? (wf.id==="ltxia2v" ? ", your image, audio and fps" : (wf.kind==="video" ? " and fps" : " and your image")) : "");
+    $("importLead").textContent = wf.label+" is built as a ComfyUI subgraph, so it can only run once you export it in API format (ComfyUI flattens the subgraph for you). Do it once below and "+maps+" map in automatically from the controls — you won't need to do this again.";
     var existing = imports[id] && imports[id].graph;
     $("importJson").value = existing ? JSON.stringify(existing, null, 1) : "";
     refreshImportMap();
@@ -1088,9 +1227,25 @@
   };
 
   /* ============ tabs ============ */
+  function renderGroupBar(){
+    var counts={image:0,video:0};
+    WORKFLOWS.forEach(function(w){ counts[groupOf(w)]++; });
+    $("cImage").textContent=counts.image; $("cVideo").textContent=counts.video;
+    document.querySelectorAll("#groupbar .grp").forEach(function(b){ b.classList.toggle("active", b.dataset.group===activeGroup); });
+  }
+  function selectGroup(g){
+    if(busy){ toast("Hold on — still rendering"); return; }
+    if(g===activeGroup) return;
+    activeGroup=g;
+    var id = (lastWf[g] && WORKFLOWS.some(function(w){ return w.id===lastWf[g] && groupOf(w)===g; })) ? lastWf[g] : firstInGroup(g);
+    activeId=id; lastWf[g]=id; persist();
+    renderGroupBar(); renderTabs(); refreshComposerForWf();
+    var tb=$("tabs"); if(tb) tb.scrollLeft=0;
+  }
   function renderTabs(){
     var el=$("tabs"); el.innerHTML="";
     WORKFLOWS.forEach(function(wf){
+      if(groupOf(wf)!==activeGroup) return;
       var ready=!needsSetup(wf);
       var t=document.createElement("button");
       t.className="tab"+(wf.id===activeId?" active":"")+(ready?" ready":"");
@@ -1113,6 +1268,7 @@
     // controls visibility
     $("qualityBtn").classList.toggle("hidden", wf.fields.indexOf("quality")<0);
     $("qualityBtn").classList.toggle("on", !!s.quality);
+    $("sizeBtn").classList.toggle("hidden", wf.fields.indexOf("size")<0);
     $("inputsBtn").classList.toggle("hidden", wf.fields.indexOf("inputs")<0);
     // prompt
     ta.placeholder=wf.placeholder||"Describe…"; ta.value=s.prompt||""; autoGrow();
@@ -1122,6 +1278,15 @@
     // generate button label / setup state
     var setup=needsSetup(wf);
     $("genBtnLabel").textContent = setup ? ("Set up "+wf.label) : "Generate";
+    // description bar
+    var wd=$("wfDesc");
+    wd.innerHTML="";
+    var badge=document.createElement("span");
+    badge.className="badge "+(setup?"setup-badge":"ready-badge");
+    badge.textContent = setup ? "Setup" : "Ready";
+    var txt=document.createElement("span");
+    txt.textContent = wf.desc || "";
+    wd.appendChild(badge); wd.appendChild(txt);
     // empty-state + result
     clearStage();
     if(s.lastResult){ showResult(s.lastResult, false); }
@@ -1147,7 +1312,7 @@
 
   function selectWf(id){
     if(busy){ toast("Hold on — still rendering"); return; }
-    activeId=id; persist(); renderTabs(); refreshComposerForWf();
+    activeId=id; lastWf[groupOf(wfDef(id))]=id; persist(); renderTabs(); refreshComposerForWf();
   }
 
   /* ============ settings wiring ============ */
@@ -1156,6 +1321,9 @@
     $("setServer").value=settings.server; $("setSteps").value=settings.steps; $("setCfg").value=settings.cfg; $("setShift").value=settings.shift;
     fillSelect($("setSampler"),SAMPLERS,settings.sampler); fillSelect($("setScheduler"),SCHEDULERS,settings.scheduler);
     $("setQuality").value=settings.quality; $("setUnet").value=settings.unet; $("setClip").value=settings.clip; $("setClipType").value=settings.clipType; $("setVae").value=settings.vae; $("setPrefix").value=settings.prefix;
+    $("setHdUnet").value=settings.hdUnet; $("setHdClipL").value=settings.hdClipL; $("setHdClipG").value=settings.hdClipG; $("setHdT5").value=settings.hdT5; $("setHdLlama").value=settings.hdLlama;
+    $("setHdSteps").value=settings.hdSteps; $("setHdCfg").value=settings.hdCfg; $("setHdShift").value=settings.hdShift;
+    fillSelect($("setHdSampler"),SAMPLERS,settings.hdSampler); fillSelect($("setHdScheduler"),SCHEDULERS,settings.hdScheduler);
     $("testLine").textContent=""; $("testLine").className="testline";
   }
   function saveSettingsForm(){
@@ -1164,6 +1332,9 @@
     settings.sampler=$("setSampler").value; settings.scheduler=$("setScheduler").value;
     settings.quality=$("setQuality").value; settings.unet=$("setUnet").value.trim(); settings.clip=$("setClip").value.trim();
     settings.clipType=$("setClipType").value.trim()||"lumina2"; settings.vae=$("setVae").value.trim(); settings.prefix=$("setPrefix").value.trim()||"z-image-turbo";
+    settings.hdUnet=$("setHdUnet").value.trim(); settings.hdClipL=$("setHdClipL").value.trim(); settings.hdClipG=$("setHdClipG").value.trim(); settings.hdT5=$("setHdT5").value.trim(); settings.hdLlama=$("setHdLlama").value.trim();
+    settings.hdSteps=num($("setHdSteps").value,30); settings.hdCfg=num($("setHdCfg").value,5); settings.hdShift=num($("setHdShift").value,3);
+    settings.hdSampler=$("setHdSampler").value; settings.hdScheduler=$("setHdScheduler").value;
     persistSettings();
   }
   $("openSettings").onclick=function(){ loadSettingsForm(); openSheet("settingsSheet"); refreshVram(); };
@@ -1171,7 +1342,8 @@
   $("btnFree2").onclick=freeMemory;
   $("btnRefreshVram").onclick=refreshVram;
   $("status").onclick=function(){ if($("status").dataset.state!=="online"){ loadSettingsForm(); openSheet("settingsSheet"); } };
-  ["setServer","setSteps","setCfg","setShift","setSampler","setScheduler","setQuality","setUnet","setClip","setClipType","setVae","setPrefix"].forEach(function(id){
+  ["setServer","setSteps","setCfg","setShift","setSampler","setScheduler","setQuality","setUnet","setClip","setClipType","setVae","setPrefix",
+   "setHdUnet","setHdClipL","setHdClipG","setHdT5","setHdLlama","setHdSteps","setHdCfg","setHdShift","setHdSampler","setHdScheduler"].forEach(function(id){
     $(id).addEventListener("change",function(){ var prev=settings.server; saveSettingsForm(); if(id==="setServer"&&settings.server!==prev){ wsRetry=0; connectWs(); } });
   });
   $("btnTest").onclick=async function(){
@@ -1202,6 +1374,8 @@
   document.addEventListener("visibilitychange",function(){ if(!document.hidden && (!ws||ws.readyState!==1)){ wsRetry=0; connectWs(); }});
 
   /* ============ init ============ */
+  document.querySelectorAll("#groupbar .grp").forEach(function(b){ b.onclick=function(){ selectGroup(b.dataset.group); }; });
+  renderGroupBar();
   renderTabs();
   refreshComposerForWf();
   connectWs();
