@@ -634,7 +634,15 @@
     get:function(k,d){ try{ var v=localStorage.getItem(k); return v===null?d:JSON.parse(v); }catch(e){ return d; } },
     set:function(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
   };
-  var settings = Object.assign({}, DEFAULTS, LS.get("cs_settings", {}));
+  var _savedSettings = LS.get("cs_settings", {});
+  var settings = Object.assign({}, DEFAULTS, _savedSettings);
+  if(!_savedSettings.server){
+    try{
+      if((location.protocol==="http:" || location.protocol==="https:") && location.hostname){
+        settings.server = location.protocol+"//"+location.hostname+":8188";
+      }
+    }catch(e){}
+  }
   var clientId = LS.get("cs_client", null);
   if(!clientId){ clientId = (window.crypto&&crypto.randomUUID)?crypto.randomUUID():("c"+Date.now()+Math.random().toString(16).slice(2)); LS.set("cs_client", clientId); }
   var imports = LS.get("cs_imports", {});     // id -> { graph }
